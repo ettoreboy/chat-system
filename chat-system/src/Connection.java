@@ -12,11 +12,14 @@ private Socket newConnection;
 private int portNumber;
 private String hostName;
 
-	public Connection (String hostName, int portNumber) throws UnknownHostException, IOException {
-       newConnection = new Socket(hostName, portNumber);
-       this.hostName = hostName;
-       this.portNumber = portNumber;
-	}
+
+
+	public Connection(Socket newConnection, int portNumber) {
+	super();
+	this.newConnection = newConnection;
+	this.portNumber = portNumber;
+	hostName = newConnection.getInetAddress().getHostName();
+}
 
 	public  BufferedReader createBufferedReader () {
 		BufferedReader in = null;
