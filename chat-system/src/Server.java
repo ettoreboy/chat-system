@@ -14,16 +14,15 @@ public class Server {
 	private ArrayList<ServerMessage> history;
 	private ArrayList<Client> clientList;
 
+	private static Thread t;
+
 	public Server() {
 
 	}
 
 	public void acceptClients() {
 		AcceptServer as = new AcceptServer();
-		Thread t = new Thread(as);
-		if(t.isAlive()){
-			t.interrupt();
-		}
+		t = new Thread(as);
 		t.start();
 	}
 
@@ -37,23 +36,26 @@ public class Server {
 
 class AcceptServer implements Runnable {
 	private int listeningPort = 4001;
-	private ServerSocket listeningSocket;
+	private static ServerSocket listeningSocket;
 	private boolean acceptClient = true;
 
 	@Override
 	public void run() {
-       
-	
+
 		try {
-			
+			if (listeningSocket != null) {
+				listeningSocket.close();
+			}
+
 			listeningSocket = new ServerSocket(listeningPort);
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("Ready to accept connections on \nHost: ."
-				+ listeningSocket.getInetAddress().getHostName()
-				+ "\nPort: " + listeningSocket.getLocalPort());
+				+ listeningSocket.getInetAddress().getCanonicalHostName() + "\nPort: "
+				+ listeningSocket.getLocalPort());
 
 		while (acceptClient) {
 			try {
@@ -70,7 +72,8 @@ class AcceptServer implements Runnable {
 				System.out.println("User is on port: " + port);
 
 			} catch (IOException e) {
-				System.err.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
+				System.err
+						.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
 				e.printStackTrace();
 			}
 		}
