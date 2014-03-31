@@ -17,7 +17,6 @@ public class Server {
 	private static Thread t;
 
 	public Server() {
-     clients = new HashMap();
 	}
 
 	public void acceptClients() {
@@ -26,8 +25,7 @@ public class Server {
 		t.start();
 	}
 
-	
-	//For Testing
+	// For Testing
 	public static void main(String[] args) {
 		Server s = new Server();
 		s.acceptClients();
@@ -36,10 +34,26 @@ public class Server {
 
 }
 
+// Classes to be run on a different thread.
+/**
+ * It accepts client connection and does the first handshake
+ * 
+ * @author ettore
+ * 
+ */
 class AcceptServer implements Runnable {
 	private int listeningPort = 4001;
 	private static ServerSocket listeningSocket;
 	private boolean acceptClient = true;
+	private static Map<String, Connection> clients;
+
+	public Map<String, Connection> getClients() {
+		return clients;
+	}
+
+	public void setClients(Map<String, Connection> clients) {
+		this.clients = clients;
+	}
 
 	@Override
 	public void run() {
@@ -50,41 +64,51 @@ class AcceptServer implements Runnable {
 			}
 
 			listeningSocket = new ServerSocket(listeningPort);
+			clients = new HashMap();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("Ready to accept connections on \nHost: ."
-				+ listeningSocket.getInetAddress().getCanonicalHostName() + "\nPort: "
-				+ listeningSocket.getLocalPort());
+				+ listeningSocket.getInetAddress().getCanonicalHostName()
+				+ "\nPort: " + listeningSocket.getLocalPort());
 
 		while (acceptClient) {
 			try {
-
+					
 				Socket clientSocket = listeningSocket.accept();
-				// Generate random free port
-				ServerSocket server = new ServerSocket(0);
-				int port = server.getLocalPort();
-				server.close();
-
 				Connection con = new Connection(clientSocket);
-				
-				//Handshake here
-				if(con.createBufferedReader().readLine()!=null){
-					String user = con.createBufferedReader().readLine();
+				String user = con.createBufferedReader().readLine();
+				// Handshake here
+				if (user != null) {
+					// Generate random free port
+					ServerSocket server = new ServerSocket(0);
+					int port = server.getLocalPort();
+					server.close();
+
 					con.createPrintWriter().println(port);
 					
-				}
+					clientSocket.close();
+					
+					clients.put(user, con);
+					System.out.println("Accepted a new connection.");
+					System.out.println("User is on port: " + port);
+					System.out.println("Username is: "+user);
 
-				System.out.println("Accepted a new connection.");
-				System.out.println("User is on port: " + port);
+				}
 
 			} catch (IOException e) {
 				System.err
 						.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
 				e.printStackTrace();
 			}
+		}
+		try {
+			listeningSocket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}

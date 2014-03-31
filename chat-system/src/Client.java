@@ -1,7 +1,6 @@
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -40,6 +39,7 @@ public class Client {
 		this.name = name;
 		this.read = con.createBufferedReader();
 		this.write = con.createPrintWriter();
+		clientAccepted = true;
 	}
 
 	/**
@@ -50,7 +50,6 @@ public class Client {
 			public void run() {
 				try {
 					Client window = new Client();
-					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -68,10 +67,11 @@ public class Client {
 		frame = new JFrame();
 		frame.setBounds(100, 100, 800, 600);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setVisible(true);
 
 		final JTextArea textArea = new JTextArea(5, 30);
 		JTextPane hostname = new JTextPane();
-		hostname.setText("IP address..");
+		hostname.setText("localhost");
 		JTextPane username = new JTextPane();
 		username.setText("Username..");
 		JPanel inputPanel = new JPanel();
@@ -79,7 +79,7 @@ public class Client {
 		inputPanel.add(Box.createHorizontalStrut(15));
 		inputPanel.add(hostname);
 
-		int answ = JOptionPane.showConfirmDialog(null, inputPanel,
+		int answ = JOptionPane.showConfirmDialog(frame, inputPanel,
 				"Enter credentials", JOptionPane.YES_NO_OPTION);
 
 		if (answ == JOptionPane.NO_OPTION) {
@@ -97,9 +97,13 @@ public class Client {
 				try {
 					host = InetAddress.getByName(hostname.getText());
 				} catch (Exception e) {
+					JOptionPane.showMessageDialog(null, host.toString()
+							+ " is not correct");
 					System.err
 							.println("An error occurred while looking up for the Host.");
 					e.printStackTrace();
+					System.exit(1);
+
 				}
 				if (!host.isReachable(5)) {
 					JOptionPane.showMessageDialog(null, host.toString()
@@ -109,23 +113,22 @@ public class Client {
 
 			}
 
-			Connection con = new Connection(new Socket(host,
-					initialPort));
+			Connection con = new Connection(new Socket(host, initialPort));
 			this.setCon(con);
 			this.setRead(con.createBufferedReader());
 			this.setWrite(con.createPrintWriter());
 
 			while (clientAccepted) {
 				this.getWrite().println(this.getName());
+				System.out.println(this.getName());
 
 				if (this.getRead().readLine() != null) {
-					
+
 					String newport = this.getRead().readLine();
 					System.out.println("newport");
 					int port = Integer.valueOf(newport);
 					try {
-						con = new Connection(new Socket(host,
-								port));
+						con = new Connection(new Socket(host, port));
 						this.setCon(con);
 						this.setRead(con.createBufferedReader());
 						this.setWrite(con.createPrintWriter());
@@ -143,6 +146,7 @@ public class Client {
 					}
 				}
 			}
+			System.out.println("Connection established.");
 
 			// We put the TextArea object in a Scrollable Pane
 			JScrollPane scrollPane = new JScrollPane(textArea);
@@ -191,8 +195,8 @@ public class Client {
 						userInputField.setText("");
 					}
 				}
+				
 			});
-
 			frame.setLayout(new FlowLayout());
 			// adds and centers the text field to the frame
 			frame.add(userInputField, SwingConstants.CENTER);
