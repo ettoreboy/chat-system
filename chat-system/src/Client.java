@@ -121,11 +121,11 @@ public class Client {
 			while (clientAccepted) {
 				this.getWrite().println(this.getName());
 				System.out.println(this.getName());
+				String newport = this.getRead().readLine();
 
-				if (this.getRead().readLine() != null) {
+				if (newport != null) {
 
-					String newport = this.getRead().readLine();
-					System.out.println("newport");
+					System.out.println(newport);
 					int port = Integer.valueOf(newport);
 					try {
 						con = new Connection(new Socket(host, port));
