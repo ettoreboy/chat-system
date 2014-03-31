@@ -1,4 +1,3 @@
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
@@ -102,7 +101,7 @@ public class Client {
 							.println("An error occurred while looking up for the Host.");
 					e.printStackTrace();
 				}
-				if (!host.isReachable(10)) {
+				if (!host.isReachable(5)) {
 					JOptionPane.showMessageDialog(null, host.toString()
 							+ " is not reachable");
 					System.exit(1);
@@ -110,7 +109,7 @@ public class Client {
 
 			}
 
-			Connection con = new Connection(new Socket(hostname.getText(),
+			Connection con = new Connection(new Socket(host,
 					initialPort));
 			this.setCon(con);
 			this.setRead(con.createBufferedReader());
@@ -120,10 +119,12 @@ public class Client {
 				this.getWrite().println(this.getName());
 
 				if (this.getRead().readLine() != null) {
+					
 					String newport = this.getRead().readLine();
+					System.out.println("newport");
 					int port = Integer.valueOf(newport);
 					try {
-						con = new Connection(new Socket(hostname.getText(),
+						con = new Connection(new Socket(host,
 								port));
 						this.setCon(con);
 						this.setRead(con.createBufferedReader());
