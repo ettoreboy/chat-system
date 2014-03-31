@@ -6,18 +6,18 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Server {
 
-	private ArrayList<Connection> senderPool;
-	private ArrayList<Connection> receiverPool;
 	private ArrayList<ServerMessage> history;
-	private ArrayList<Client> clientList;
+	private Map<String, Connection> clients;
 
 	private static Thread t;
 
 	public Server() {
-
+     clients = new HashMap();
 	}
 
 	public void acceptClients() {
@@ -26,6 +26,8 @@ public class Server {
 		t.start();
 	}
 
+	
+	//For Testing
 	public static void main(String[] args) {
 		Server s = new Server();
 		s.acceptClients();
@@ -66,7 +68,14 @@ class AcceptServer implements Runnable {
 				int port = server.getLocalPort();
 				server.close();
 
-				Connection con = new Connection(clientSocket, port);
+				Connection con = new Connection(clientSocket);
+				
+				//Handshake here
+				if(con.createBufferedReader().readLine()!=null){
+					String user = con.createBufferedReader().readLine();
+					con.createPrintWriter().println(port);
+					
+				}
 
 				System.out.println("Accepted a new connection.");
 				System.out.println("User is on port: " + port);

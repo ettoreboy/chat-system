@@ -9,15 +9,13 @@ import java.net.UnknownHostException;
 
 public class Connection {
 private Socket newConnection;
-private int portNumber;
 private String hostName;
 
 
 
-	public Connection(Socket newConnection, int portNumber) {
+	public Connection(Socket newConnection) {
 	super();
 	this.newConnection = newConnection;
-	this.portNumber = portNumber;
 	hostName = newConnection.getInetAddress().getHostName();
 }
 
