@@ -105,7 +105,7 @@ public class Client {
 					System.exit(1);
 
 				}
-				if (!host.isReachable(5)) {
+				if (!host.isReachable(20)) {
 					JOptionPane.showMessageDialog(null, host.toString()
 							+ " is not reachable");
 					System.exit(1);

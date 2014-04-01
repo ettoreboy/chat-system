@@ -86,12 +86,15 @@ class AcceptServer implements Runnable {
 					ServerSocket server = new ServerSocket(0);
 					int port = server.getLocalPort();
 					server.close();
-
+					
+					//Send new port and listen to it.
+					ServerSocket sock = new ServerSocket(port);
 					con.createPrintWriter().println(port);
-					
-					clientSocket.close();
-					
+					clientSocket = sock.accept(); 
+					con = new Connection(clientSocket);
 					clients.put(user, con);
+					
+					sock.close();
 					System.out.println("Accepted a new connection.");
 					System.out.println("User is on port: " + port);
 					System.out.println("Username is: "+user);
