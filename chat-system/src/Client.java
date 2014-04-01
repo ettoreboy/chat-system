@@ -1,5 +1,4 @@
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,6 +19,7 @@ public class Client extends JFrame {
 	private PrintWriter write;
 	private boolean clientAccepted;
 	private InetAddress host;
+	int port;
 
 	public Client() throws UnknownHostException, IOException {
 		super();
@@ -28,16 +28,18 @@ public class Client extends JFrame {
 		this.read = null;
 		this.write = null;
 		clientAccepted = true;
-		
+
 		initialize();
 	}
 
 	/**
 	 * Launch the application.
-	 * @throws IOException 
-	 * @throws UnknownHostException 
+	 * 
+	 * @throws IOException
+	 * @throws UnknownHostException
 	 */
-	public static void main(String[] args) throws UnknownHostException, IOException {
+	public static void main(String[] args) throws UnknownHostException,
+			IOException {
 
 		new Client();
 	}
@@ -50,8 +52,6 @@ public class Client extends JFrame {
 	 */
 	private void initialize() throws UnknownHostException, IOException {
 
-		
-		
 		final JTextArea textArea = new JTextArea(15, 40);
 		JTextPane hostname = new JTextPane();
 		hostname.setText("localhost");
@@ -109,7 +109,7 @@ public class Client extends JFrame {
 				if (newport != null) {
 
 					System.out.println(newport);
-					int port = Integer.valueOf(newport);
+					port = Integer.valueOf(newport);
 					try {
 						con = new Connection(new Socket(host, port));
 						this.setCon(con);
@@ -121,7 +121,7 @@ public class Client extends JFrame {
 								+ "you are connected to Hostname: "
 								+ con.getNewConnection().getInetAddress()
 										.getHostName() + "Port: "
-								+ con.getNewConnection().getPort());
+								+ con.getNewConnection().getPort()+"\n");
 					} catch (IOException e) {
 						System.err
 								.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
@@ -131,70 +131,48 @@ public class Client extends JFrame {
 			}
 			System.out.println("Connection established.");
 
-			// We put the TextArea object in a Scrollable Pane
 			JScrollPane scrollPane = new JScrollPane(textArea);
-
-			// In order to ensure the scroll Pane object appears in your window,
-			// set a preferred size to it!
-			scrollPane.setPreferredSize(new Dimension(380, 100));
-
-			// Lines will be wrapped if they are too long to fit within the
-			// allocated width
+			scrollPane.setPreferredSize(new Dimension(500, 100));
 			textArea.setLineWrap(true);
-
-			// Lines will be wrapped at word boundaries (whitespace) if they are
-			// too long to fit within the allocated width
 			textArea.setWrapStyleWord(true);
-
-			// Assuming this is the chat client's window where we read text sent
-			// out
-			// and received, we don't want our Text Area to be editable!
 			textArea.setEditable(false);
-
-			// We also want a vertical scroll bar on our pane, as text is added
-			// to it
 			scrollPane
 					.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
 			System.out.println("Gui instantiated");
 
-			// Now let's just add a Text Field for user input, and make sure our
-			// text area stays on the last line as subsequent lines are
-			// added and auto-scrolls
-			final JTextField userInputField = new JTextField(30);
+			final JTextField userInputField = new JTextField(40);
 			this.setLayout(new FlowLayout());
-			// adds and centers the text field to the frame
 			this.getContentPane().add(userInputField, SwingConstants.CENTER);
-			// adds and centers the scroll pane to the frame
 			this.getContentPane().add(scrollPane, SwingConstants.CENTER);
 
 			userInputField.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent event) {
-					// We get the text from the textfield
 					String fromUser = userInputField.getText();
 
 					if (fromUser != null) {
-						// We append the text from the user
-						textArea.append("Asim: " + fromUser + "\n");
-
-						// The pane auto-scrolls with each new response added
-						textArea.setCaretPosition(textArea.getDocument()
-								.getLength());
-						// We reset our text field to "" each time the user
-						// presses Enter
+						ServerMessage s = new ServerMessage(fromUser, name, host, port );
+						textArea.append(s.toString());
+						textArea.setCaretPosition(textArea.getDocument().getLength());
 						userInputField.setText("");
 					}
 				}
 
 			});
-			
+
 			this.setVisible(true);
-			this.setSize(400, 170);
+			this.setSize(500, 170);
 			this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			this.setResizable(false);
 			this.setVisible(true);
 
 		}
+	}
+
+	public String publish(String message) {
+		String newmessage = null;
+		return message;
 	}
 
 	public Connection getCon() {

@@ -1,20 +1,25 @@
 import java.net.InetAddress;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
 public class ServerMessage {
 private String text;
 private String user;
-private Date time;
+private Timestamp time;
 private InetAddress sourceIp;
 private int sourcePort;
 
-public ServerMessage(String text, String user, Date time, InetAddress sourceIp,
+public ServerMessage(String text, String user, InetAddress sourceIp,
 		int sourcePort) {
 	super();
 	this.text = text;
 	this.user = user;
-	this.time = time;
+	SimpleDateFormat f = new SimpleDateFormat("MM/dd/yyy HH:ss");
+	Date d = new Date();
+	f.format(d);
+	this.time = new Timestamp(d.getTime());
 	this.sourceIp = sourceIp;
 	this.sourcePort = sourcePort;
 }
@@ -39,10 +44,6 @@ public Date getTime() {
 	return time;
 }
 
-public void setTime(Date time) {
-	this.time = time;
-}
-
 public InetAddress getSourceIp() {
 	return sourceIp;
 }
@@ -61,8 +62,8 @@ public void setSourcePort(int sourcePort) {
 
 @Override
 public String toString() {
-	return "ServerMessage [text=" + text + ", user=" + user + ", time=" + time
-			+ ", sourceIp=" + sourceIp + ", sourcePort=" + sourcePort + "]";
+	return "User["+user+"]Message["+text+"]Datetime["+time+"]SourceIp["
+			+sourceIp+"]SourcePort["+sourcePort+"]";
 }
 
 

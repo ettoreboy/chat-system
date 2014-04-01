@@ -11,9 +11,6 @@ import java.util.Map;
 
 public class Server {
 
-	private ArrayList<ServerMessage> history;
-	private Map<String, Connection> clients;
-
 	private static Thread t;
 
 	public Server() {
@@ -23,6 +20,7 @@ public class Server {
 		AcceptServer as = new AcceptServer();
 		t = new Thread(as);
 		t.start();
+		
 	}
 
 	// For Testing
