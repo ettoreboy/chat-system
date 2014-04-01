@@ -12,11 +12,13 @@ import java.net.UnknownHostException;
 import javax.swing.*;
 
 public class Client extends JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Connection con;
 	private String name;
 	private final int initialPort = 4001;
-	private BufferedReader read;
-	private PrintWriter write;
 	private boolean clientAccepted;
 	private InetAddress host;
 	int port;
@@ -25,11 +27,9 @@ public class Client extends JFrame {
 		super();
 		this.con = null;
 		this.name = null;
-		this.read = null;
-		this.write = null;
 		clientAccepted = true;
-
 		initialize();
+		run();
 	}
 
 	/**
@@ -96,15 +96,12 @@ public class Client extends JFrame {
 
 			}
 
-			Connection con = new Connection(new Socket(host, initialPort));
-			this.setCon(con);
-			this.setRead(con.createBufferedReader());
-			this.setWrite(con.createPrintWriter());
+			con = new Connection(new Socket(host, initialPort));
 
 			while (clientAccepted) {
-				this.getWrite().println(this.getName());
+				this.con.createPrintWriter().println(this.getName());
 				System.out.println(this.getName());
-				String newport = this.getRead().readLine();
+				String newport = con.createBufferedReader().readLine();
 
 				if (newport != null) {
 
@@ -113,8 +110,6 @@ public class Client extends JFrame {
 					try {
 						con = new Connection(new Socket(host, port));
 						this.setCon(con);
-						this.setRead(con.createBufferedReader());
-						this.setWrite(con.createPrintWriter());
 						clientAccepted = false;
 						textArea.append("Welcome "
 								+ this.getName()
@@ -153,7 +148,8 @@ public class Client extends JFrame {
 
 					if (fromUser != null) {
 						ServerMessage s = new ServerMessage(fromUser, name, host, port );
-						textArea.append(s.toString());
+						//textArea.append(s.toString());
+						con.createPrintWriter().println(s.toString());
 						textArea.setCaretPosition(textArea.getDocument().getLength());
 						userInputField.setText("");
 					}
@@ -169,11 +165,14 @@ public class Client extends JFrame {
 
 		}
 	}
-
-	public String publish(String message) {
-		String newmessage = null;
-		return message;
+	
+	/**
+	 * Receive and send messages
+	 */
+	public void run(){
+		
 	}
+
 
 	public Connection getCon() {
 		return con;
@@ -195,21 +194,6 @@ public class Client extends JFrame {
 		return initialPort;
 	}
 
-	public BufferedReader getRead() {
-		return read;
-	}
-
-	public void setRead(BufferedReader read) {
-		this.read = read;
-	}
-
-	public PrintWriter getWrite() {
-		return write;
-	}
-
-	public void setWrite(PrintWriter write) {
-		this.write = write;
-	}
 
 	public boolean isClientAccepted() {
 		return clientAccepted;

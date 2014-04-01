@@ -1,12 +1,12 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.channels.ServerSocketChannel;
-import java.util.ArrayList;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class Server {
@@ -20,13 +20,27 @@ public class Server {
 		AcceptServer as = new AcceptServer();
 		t = new Thread(as);
 		t.start();
-		
+
+	}
+	
+	public void receiveMessages(){
+		ReceiveServer rs = new ReceiveServer();
+		t = new Thread(rs);
+		t.start();
+	}
+	
+	public void sendMessages(){
+		SendServer ss = new SendServer();
+		t = new Thread(ss);
+		t.start();
 	}
 
-	// For Testing
+	// Launch Server
 	public static void main(String[] args) {
 		Server s = new Server();
 		s.acceptClients();
+		s.receiveMessages();
+		s.sendMessages();
 
 	}
 
@@ -43,13 +57,13 @@ class AcceptServer implements Runnable {
 	private int listeningPort = 4001;
 	private static ServerSocket listeningSocket;
 	private boolean acceptClient = true;
-	private static Map<String, Connection> clients;
+	private static Map<InetAddress, Connection> clients;
 
-	public Map<String, Connection> getClients() {
+	public static Map<InetAddress, Connection> getClients() {
 		return clients;
 	}
 
-	public void setClients(Map<String, Connection> clients) {
+	public void setClients(Map<InetAddress, Connection> clients) {
 		this.clients = clients;
 	}
 
@@ -74,7 +88,7 @@ class AcceptServer implements Runnable {
 
 		while (acceptClient) {
 			try {
-					
+
 				Socket clientSocket = listeningSocket.accept();
 				Connection con = new Connection(clientSocket);
 				String user = con.createBufferedReader().readLine();
@@ -84,18 +98,18 @@ class AcceptServer implements Runnable {
 					ServerSocket server = new ServerSocket(0);
 					int port = server.getLocalPort();
 					server.close();
-					
-					//Send new port and listen to it.
+
+					// Send new port and listen to it.
 					ServerSocket sock = new ServerSocket(port);
 					con.createPrintWriter().println(port);
-					clientSocket = sock.accept(); 
+					clientSocket = sock.accept();
 					con = new Connection(clientSocket);
-					clients.put(user, con);
-					
+					clients.put(clientSocket.getInetAddress(), con);
+
 					sock.close();
 					System.out.println("Accepted a new connection.");
 					System.out.println("User is on port: " + port);
-					System.out.println("Username is: "+user);
+					System.out.println("Username is: " + user);
 
 				}
 
@@ -110,6 +124,96 @@ class AcceptServer implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+
+	}
+}
+
+/**
+ * Receive messages from all clients and store them in a HashMap. Yo.
+ * 
+ * @author ettore
+ * 
+ */
+class ReceiveServer implements Runnable {
+	private static Map<Timestamp, String> messages;
+	private static Map<Timestamp, String> history;
+
+	public static Map<Timestamp, String> getMessages() {
+		return messages;
+	}
+
+	public static void setMessages(Map<Timestamp, String> messages) {
+		ReceiveServer.messages = messages;
+	}
+
+	public static Map<Timestamp, String> getHistory() {
+		return history;
+	}
+
+	public static void setHistory(Map<Timestamp, String> history) {
+		ReceiveServer.history = history;
+	}
+
+	@Override
+	public void run() {
+
+		while (!AcceptServer.getClients().isEmpty()) {
+
+			Iterator it = AcceptServer.getClients().entrySet().iterator();
+			while (it.hasNext()) {
+				Map.Entry<String, Connection> pair = (Map.Entry) it.next();
+				String message = null;
+				try {
+					message = pair.getValue().createBufferedReader().readLine();
+				} catch (IOException e) {
+					System.err.println(message
+							+ " was read from socket "
+							+ pair.getValue().getNewConnection()
+									.getInetAddress() + " is invalid");
+					e.printStackTrace();
+				}
+				// If a message is present save it
+				if (message != null) {
+					Date d = new Date();
+					Timestamp t = new Timestamp(d.getTime());
+					messages.put(t, message);
+					history.put(t, message);
+				}
+			}
+
+		}
+
+	}
+}
+
+/**
+ * Send messages to all clients
+ * 
+ * @author ettore
+ * 
+ */
+class SendServer implements Runnable {
+
+	@Override
+	public void run() {
+
+		while (true) {
+
+			Iterator it = ReceiveServer.getMessages().entrySet().iterator();
+			Iterator clients = AcceptServer.getClients().entrySet().iterator();
+
+			while (it.hasNext()) {
+				Map.Entry<Timestamp, String> message = (Map.Entry) it.next();
+
+				while (clients.hasNext()) {
+					Map.Entry<Timestamp, Connection> client = (Map.Entry) clients.next();
+					client.getValue().createPrintWriter().println(message.getValue());
+				}
+				ReceiveServer.getMessages().remove(message.getKey());
+
+			}
+
 		}
 
 	}
