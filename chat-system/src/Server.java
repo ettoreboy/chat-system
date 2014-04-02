@@ -37,6 +37,12 @@ public class Server {
 		t = new Thread(ss);
 		t.start();
 	}
+	
+	public void closeConnections() {
+		Consuela cleans = new Consuela();
+		t = new Thread(cleans);
+		t.start();
+	}
 
 	// Launch Server
 	public static void main(String[] args) {
@@ -47,6 +53,8 @@ public class Server {
 		System.out.println("[Server]Receive Module initialized.");
 		s.sendMessages();
 		System.out.println("[Server]Send Module initialized.");
+		//s.closeConnections();
+		//System.out.println("[Server]Consuela started cleaning.. Nono");
 
 	}
 
@@ -89,15 +97,15 @@ class AcceptServer implements Runnable {
 			e.printStackTrace();
 		}
 		System.out.println("Ready to accept connections on \nHost: "
-				+ getMyIp()+"\nPort: "+listeningPort);
-		
+				+ getMyIp() + "\nPort: " + listeningPort);
+
 		while (acceptClient) {
 			try {
 
 				Socket clientSocket = listeningSocket.accept();
 				Connection con = new Connection(clientSocket);
 				String user = con.createBufferedReader().readLine();
-				
+
 				// Handshake here
 				if (user != null && user.contains("MarcoG")) {
 					user = user.replaceAll("MarcoG", "");
@@ -117,6 +125,18 @@ class AcceptServer implements Runnable {
 					System.out.println("Accepted a new connection.");
 					System.out.println("User is on port: " + port);
 					System.out.println("Username is: " + user);
+					
+					Iterator<?> it = AcceptServer.getClients().entrySet()
+							.iterator();
+					Map.Entry<InetAddress, Connection> pair;
+					int clientno = 0;
+					
+					while (it.hasNext()) {
+						clientno++;
+						 pair = (Map.Entry) it.next();
+						 System.out.println("[ClientList]Client on port "+pair.getValue().getNewConnection().getPort());
+					
+					}
 
 				}
 
@@ -134,27 +154,32 @@ class AcceptServer implements Runnable {
 		}
 
 	}
-	
-	public String getMyIp(){
-		String ip = null;
-	    try {
-	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-	        while (interfaces.hasMoreElements()) {
-	            NetworkInterface iface = interfaces.nextElement();
-	            // filters out 127.0.0.1 and inactive interfaces
-	            if (iface.isLoopback() || !iface.isUp())
-	                continue;
 
-	            Enumeration<InetAddress> addresses = iface.getInetAddresses();
-	            while(addresses.hasMoreElements()) {
-	                InetAddress addr = addresses.nextElement();
-	                ip = addr.getHostAddress();
-	            }
-	        }
-	    } catch (SocketException e) {
-	        throw new RuntimeException(e);
-	    }
-	    return ip;
+	/**
+	 * Get your current ip
+	 * @return
+	 */
+	public String getMyIp() {
+		String ip = null;
+		try {
+			Enumeration<NetworkInterface> interfaces = NetworkInterface
+					.getNetworkInterfaces();
+			while (interfaces.hasMoreElements()) {
+				NetworkInterface iface = interfaces.nextElement();
+				// filters out 127.0.0.1 and inactive interfaces
+				if (iface.isLoopback() || !iface.isUp())
+					continue;
+
+				Enumeration<InetAddress> addresses = iface.getInetAddresses();
+				while (addresses.hasMoreElements()) {
+					InetAddress addr = addresses.nextElement();
+					ip = addr.getHostAddress();
+				}
+			}
+		} catch (SocketException e) {
+			throw new RuntimeException(e);
+		}
+		return ip;
 	}
 }
 
@@ -212,7 +237,9 @@ class ReceiveServer implements Runnable {
 						Timestamp t = new Timestamp(d.getTime());
 						messages.put(t, message);
 						history.put(t, message);
-						System.out.println("[ReceiveServer]Message received: \n"+message+"\n");
+						System.out
+								.println("[ReceiveServer]Message received: \n"
+										+ message + "\n");
 					}
 				}
 			}
@@ -239,13 +266,14 @@ class SendServer implements Runnable {
 				Iterator it = ReceiveServer.getMessages().entrySet().iterator();
 				Iterator clients = AcceptServer.getClients().entrySet()
 						.iterator();
-				while (it.hasNext()) {
+				while (it != null && it.hasNext()) {
 					Map.Entry<Timestamp, String> message = (Map.Entry) it
 							.next();
-					System.out.println("[SendServer]Message sent: \n"+message.getValue()+"\n");
+					System.out.println("[SendServer]Message sent: \n"
+							+ message.getValue() + "\n");
 
 					while (clients.hasNext()) {
-						Map.Entry<Timestamp, Connection> client = (Map.Entry) clients
+						Map.Entry<InetAddress, Connection> client = (Map.Entry) clients
 								.next();
 						client.getValue().createPrintWriter()
 								.println(message.getValue());
@@ -258,4 +286,34 @@ class SendServer implements Runnable {
 		}
 
 	}
+}
+
+/**
+ * Close all unused connections/clients like a Cleaning Lady
+ */
+class Consuela implements Runnable {
+
+	@Override
+	public void run() {
+
+		while (true) {
+
+			if (AcceptServer.getClients() != null) {
+
+				Iterator clients = AcceptServer.getClients().entrySet()
+						.iterator();
+				while (clients.hasNext()) {
+					Map.Entry<InetAddress, Connection> client = (Map.Entry) clients
+							.next();
+					if(client.getValue().getNewConnection().isClosed()){
+						AcceptServer.getClients().remove(client.getKey());
+						System.out.println("[Server]Consuela closed:" +client.getKey()+"on port: " +client.getValue().getNewConnection().getLocalPort()+"\n");
+					}
+
+				}
+
+			}
+		}
+	}
+
 }
