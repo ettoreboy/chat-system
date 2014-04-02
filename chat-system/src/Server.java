@@ -11,6 +11,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 
 public class Server {
 
@@ -71,26 +72,27 @@ class AcceptServer implements Runnable {
 	private int listeningPort = 4001;
 	private static ServerSocket listeningSocket;
 	private boolean acceptClient = true;
-	private static Map<InetAddress, Connection> clients;
+	int randomkey;
+	private static Map<Integer, Connection> clients;
 
-	public static Map<InetAddress, Connection> getClients() {
+	public static Map<Integer, Connection> getClients() {
 		return clients;
 	}
 
-	public void setClients(Map<InetAddress, Connection> clients) {
+	public void setClients(Map<Integer, Connection> clients) {
 		this.clients = clients;
 	}
 
 	@Override
 	public void run() {
-
+        int clientsSize = 0;
 		try {
 			if (listeningSocket != null) {
 				listeningSocket.close();
 			}
 
 			listeningSocket = new ServerSocket(listeningPort);
-			clients = new HashMap<InetAddress, Connection>();
+			clients = new HashMap<Integer, Connection>();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -119,7 +121,8 @@ class AcceptServer implements Runnable {
 					con.createPrintWriter().println(port);
 					clientSocket = sock.accept();
 					con = new Connection(clientSocket);
-					clients.put(clientSocket.getInetAddress(), con);
+					clientsSize++;
+					clients.put(clientsSize, con);
 
 					sock.close();
 					System.out.println("Accepted a new connection.");
@@ -128,13 +131,12 @@ class AcceptServer implements Runnable {
 					
 					Iterator<?> it = AcceptServer.getClients().entrySet()
 							.iterator();
-					Map.Entry<InetAddress, Connection> pair;
-					int clientno = 0;
+					Map.Entry<InetAddress, Connection> pair;				
 					
 					while (it.hasNext()) {
-						clientno++;
+						
 						 pair = (Map.Entry) it.next();
-						 System.out.println("[ClientList]Client on port "+pair.getValue().getNewConnection().getPort());
+						 System.out.println("[ClientList]Client "+clientsSize+" on port "+pair.getValue().getNewConnection().getPort());
 					
 					}
 
@@ -219,7 +221,7 @@ class ReceiveServer implements Runnable {
 				Iterator<?> it = AcceptServer.getClients().entrySet()
 						.iterator();
 				while (it.hasNext()) {
-					Map.Entry<String, Connection> pair = (Map.Entry) it.next();
+					Map.Entry<Integer, Connection> pair = (Map.Entry) it.next();
 					String message = null;
 					try {
 						message = pair.getValue().createBufferedReader()
@@ -273,7 +275,7 @@ class SendServer implements Runnable {
 							+ message.getValue() + "\n");
 
 					while (clients.hasNext()) {
-						Map.Entry<InetAddress, Connection> client = (Map.Entry) clients
+						Map.Entry<Integer, Connection> client = (Map.Entry) clients
 								.next();
 						client.getValue().createPrintWriter()
 								.println(message.getValue());
