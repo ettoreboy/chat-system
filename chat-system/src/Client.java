@@ -106,7 +106,7 @@ public class Client extends JFrame {
 			con = new Connection(new Socket(host, initialPort));
 
 			while (clientAccepted) {
-				this.con.createPrintWriter().println(this.getName());
+				this.con.createPrintWriter().println("MarcoG"+this.getName());
 				System.out.println(this.getName());
 				String newport = con.createBufferedReader().readLine();
 

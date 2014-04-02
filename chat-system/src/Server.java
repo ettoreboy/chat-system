@@ -90,15 +90,17 @@ class AcceptServer implements Runnable {
 		}
 		System.out.println("Ready to accept connections on \nHost: "
 				+ getMyIp()+"\nPort: "+listeningPort);
-
+		
 		while (acceptClient) {
 			try {
 
 				Socket clientSocket = listeningSocket.accept();
 				Connection con = new Connection(clientSocket);
 				String user = con.createBufferedReader().readLine();
+				
 				// Handshake here
-				if (user != null) {
+				if (user != null && user.contains("MarcoG")) {
+					user = user.replaceAll("MarcoG", "");
 					// Generate random free port
 					ServerSocket server = new ServerSocket(0);
 					int port = server.getLocalPort();
