@@ -27,8 +27,8 @@ public class Client extends JFrame {
 	private InetAddress host;
 	int port;
 	private static ArrayList<String> history;
-	final JTextArea textArea = new JTextArea(15, 40);
-	final JTextField userInputField = new JTextField(40);
+	final JTextArea textArea = new JTextArea(25, 80);
+	final JTextField userInputField = new JTextField(45);
 
 	public Client() throws UnknownHostException, IOException {
 		super();
@@ -167,7 +167,7 @@ public class Client extends JFrame {
 			});
 
 			this.setVisible(true);
-			this.setSize(500, 170);
+			this.setSize(600, 170);
 			this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			this.setResizable(false);
 			this.setVisible(true);
@@ -188,14 +188,14 @@ public class Client extends JFrame {
 			if (fromServer != null) {
 				
 				if (!history.contains(fromServer)) {
-					textArea.append(fromServer.toString());
+					textArea.append(fromServer.toString()+"\n");
 					textArea.setCaretPosition(textArea.getDocument()
 							.getLength());
 					userInputField.setText("");
 				}
 				else{
 					textArea.append("\t");
-					textArea.append(fromServer.toString());
+					textArea.append(fromServer.toString()+"\n");
 					textArea.setCaretPosition(textArea.getDocument()
 							.getLength());
 					userInputField.setText("");

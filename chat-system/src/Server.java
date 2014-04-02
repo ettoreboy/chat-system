@@ -15,13 +15,12 @@ import java.util.Random;
 
 public class Server {
 
-	private static Thread t;
-
 	public Server() {
 	}
 
 	public void acceptClients() {
 		AcceptServer as = new AcceptServer();
+		Thread t;
 		t = new Thread(as);
 		t.start();
 
@@ -29,18 +28,21 @@ public class Server {
 
 	public void receiveMessages() {
 		ReceiveServer rs = new ReceiveServer();
+		Thread t;
 		t = new Thread(rs);
 		t.start();
 	}
 
 	public void sendMessages() {
 		SendServer ss = new SendServer();
+		Thread t;
 		t = new Thread(ss);
 		t.start();
 	}
 	
 	public void closeConnections() {
 		Consuela cleans = new Consuela();
+		Thread t;
 		t = new Thread(cleans);
 		t.start();
 	}
