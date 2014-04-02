@@ -186,8 +186,7 @@ public class Client extends JFrame {
 			String fromServer = con.createBufferedReader().readLine();
 
 			if (fromServer != null) {
-				System.out.println("Tot. messages sent:"+history.size());
-				System.out.println("Last Message:"+history.get(history.size()-1));
+				
 				if (!history.contains(fromServer)) {
 					textArea.append(fromServer.toString());
 					textArea.setCaretPosition(textArea.getDocument()
@@ -201,7 +200,8 @@ public class Client extends JFrame {
 							.getLength());
 					userInputField.setText("");
 				}
-			
+				System.out.println("Tot. messages sent:"+history.size());
+				System.out.println("Last Message:"+history.get(history.size()-1));
 
 			}
 		}
