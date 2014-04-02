@@ -106,7 +106,7 @@ public class Client extends JFrame {
 			con = new Connection(new Socket(host, initialPort));
 
 			while (clientAccepted) {
-				this.con.createPrintWriter().println("MarcoG"+this.getName());
+				this.con.createPrintWriter().println("MarcoG" + this.getName());
 				System.out.println(this.getName());
 				String newport = con.createBufferedReader().readLine();
 
@@ -186,22 +186,22 @@ public class Client extends JFrame {
 			String fromServer = con.createBufferedReader().readLine();
 
 			if (fromServer != null) {
-				
+
 				if (!history.contains(fromServer)) {
-					textArea.append(fromServer.toString()+"\n");
+					textArea.append(fromServer.toString() + "\n");
 					textArea.setCaretPosition(textArea.getDocument()
 							.getLength());
 					userInputField.setText("");
-				}
-				else{
+				} else {
 					textArea.append("\t");
-					textArea.append(fromServer.toString()+"\n");
+					textArea.append(fromServer.toString() + "\n");
 					textArea.setCaretPosition(textArea.getDocument()
 							.getLength());
 					userInputField.setText("");
 				}
-				System.out.println("Tot. messages sent:"+history.size());
-				System.out.println("Last Message:"+history.get(history.size()-1));
+				System.out.println("Tot. messages sent:" + history.size());
+				System.out.println("Last Message:"
+						+ history.get(history.size() - 1));
 
 			}
 		}
