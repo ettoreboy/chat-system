@@ -8,6 +8,10 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.*;
 
@@ -22,6 +26,9 @@ public class Client extends JFrame {
 	private boolean clientAccepted;
 	private InetAddress host;
 	int port;
+	private static ArrayList<String> history;
+	final JTextArea textArea = new JTextArea(15, 40);
+	final JTextField userInputField = new JTextField(40);
 
 	public Client() throws UnknownHostException, IOException {
 		super();
@@ -51,8 +58,8 @@ public class Client extends JFrame {
 	 * @throws UnknownHostException
 	 */
 	private void initialize() throws UnknownHostException, IOException {
+		history = new ArrayList<String>();
 
-		final JTextArea textArea = new JTextArea(15, 40);
 		JTextPane hostname = new JTextPane();
 		hostname.setText("localhost");
 		JTextPane username = new JTextPane();
@@ -116,7 +123,7 @@ public class Client extends JFrame {
 								+ "you are connected to Hostname: "
 								+ con.getNewConnection().getInetAddress()
 										.getHostName() + "Port: "
-								+ con.getNewConnection().getPort()+"\n");
+								+ con.getNewConnection().getPort() + "\n");
 					} catch (IOException e) {
 						System.err
 								.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
@@ -136,7 +143,6 @@ public class Client extends JFrame {
 
 			System.out.println("Gui instantiated");
 
-			final JTextField userInputField = new JTextField(40);
 			this.setLayout(new FlowLayout());
 			this.getContentPane().add(userInputField, SwingConstants.CENTER);
 			this.getContentPane().add(scrollPane, SwingConstants.CENTER);
@@ -147,11 +153,14 @@ public class Client extends JFrame {
 					String fromUser = userInputField.getText();
 
 					if (fromUser != null) {
-						ServerMessage s = new ServerMessage(fromUser, name, host, port );
-						//textArea.append(s.toString());
+						ServerMessage s = new ServerMessage(fromUser, name,
+								host, port);
+						// textArea.append(s.toString());
 						con.createPrintWriter().println(s.toString());
-						textArea.setCaretPosition(textArea.getDocument().getLength());
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
 						userInputField.setText("");
+						history.add(s.toString());
 					}
 				}
 
@@ -165,14 +174,38 @@ public class Client extends JFrame {
 
 		}
 	}
-	
-	/**
-	 * Receive and send messages
-	 */
-	public void run(){
-		
-	}
 
+	/**
+	 * Receive messages
+	 * 
+	 * @throws IOException
+	 */
+	public void run() throws IOException {
+
+		while (true) {
+			String fromServer = con.createBufferedReader().readLine();
+
+			if (fromServer != null) {
+				System.out.println("Tot. messages sent:"+history.size());
+				System.out.println("Last Message:"+history.get(history.size()-1));
+				if (!history.contains(fromServer)) {
+					textArea.append(fromServer.toString());
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+					userInputField.setText("");
+				}
+				else{
+					textArea.append("\t");
+					textArea.append(fromServer.toString());
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+					userInputField.setText("");
+				}
+			
+
+			}
+		}
+	}
 
 	public Connection getCon() {
 		return con;
@@ -193,7 +226,6 @@ public class Client extends JFrame {
 	public int getInitialPort() {
 		return initialPort;
 	}
-
 
 	public boolean isClientAccepted() {
 		return clientAccepted;

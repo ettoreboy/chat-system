@@ -1,10 +1,13 @@
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,14 +25,14 @@ public class Server {
 		t.start();
 
 	}
-	
-	public void receiveMessages(){
+
+	public void receiveMessages() {
 		ReceiveServer rs = new ReceiveServer();
 		t = new Thread(rs);
 		t.start();
 	}
-	
-	public void sendMessages(){
+
+	public void sendMessages() {
 		SendServer ss = new SendServer();
 		t = new Thread(ss);
 		t.start();
@@ -39,8 +42,11 @@ public class Server {
 	public static void main(String[] args) {
 		Server s = new Server();
 		s.acceptClients();
+		System.out.println("[Server]Accept Module initialized.");
 		s.receiveMessages();
+		System.out.println("[Server]Receive Module initialized.");
 		s.sendMessages();
+		System.out.println("[Server]Send Module initialized.");
 
 	}
 
@@ -76,15 +82,14 @@ class AcceptServer implements Runnable {
 			}
 
 			listeningSocket = new ServerSocket(listeningPort);
-			clients = new HashMap();
+			clients = new HashMap<InetAddress, Connection>();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Ready to accept connections on \nHost: ."
-				+ listeningSocket.getInetAddress().getCanonicalHostName()
-				+ "\nPort: " + listeningSocket.getLocalPort());
+		System.out.println("Ready to accept connections on \nHost: "
+				+ getMyIp()+"\nPort: "+listeningPort);
 
 		while (acceptClient) {
 			try {
@@ -127,6 +132,28 @@ class AcceptServer implements Runnable {
 		}
 
 	}
+	
+	public String getMyIp(){
+		String ip = null;
+	    try {
+	        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+	        while (interfaces.hasMoreElements()) {
+	            NetworkInterface iface = interfaces.nextElement();
+	            // filters out 127.0.0.1 and inactive interfaces
+	            if (iface.isLoopback() || !iface.isUp())
+	                continue;
+
+	            Enumeration<InetAddress> addresses = iface.getInetAddresses();
+	            while(addresses.hasMoreElements()) {
+	                InetAddress addr = addresses.nextElement();
+	                ip = addr.getHostAddress();
+	            }
+	        }
+	    } catch (SocketException e) {
+	        throw new RuntimeException(e);
+	    }
+	    return ip;
+	}
 }
 
 /**
@@ -157,28 +184,34 @@ class ReceiveServer implements Runnable {
 
 	@Override
 	public void run() {
+		messages = new HashMap<Timestamp, String>();
+		history = new HashMap<Timestamp, String>();
+		while (true) {
 
-		while (!AcceptServer.getClients().isEmpty()) {
-
-			Iterator it = AcceptServer.getClients().entrySet().iterator();
-			while (it.hasNext()) {
-				Map.Entry<String, Connection> pair = (Map.Entry) it.next();
-				String message = null;
-				try {
-					message = pair.getValue().createBufferedReader().readLine();
-				} catch (IOException e) {
-					System.err.println(message
-							+ " was read from socket "
-							+ pair.getValue().getNewConnection()
-									.getInetAddress() + " is invalid");
-					e.printStackTrace();
-				}
-				// If a message is present save it
-				if (message != null) {
-					Date d = new Date();
-					Timestamp t = new Timestamp(d.getTime());
-					messages.put(t, message);
-					history.put(t, message);
+			if (AcceptServer.getClients() != null) {
+				Iterator<?> it = AcceptServer.getClients().entrySet()
+						.iterator();
+				while (it.hasNext()) {
+					Map.Entry<String, Connection> pair = (Map.Entry) it.next();
+					String message = null;
+					try {
+						message = pair.getValue().createBufferedReader()
+								.readLine();
+					} catch (IOException e) {
+						System.err.println(message
+								+ " was read from socket "
+								+ pair.getValue().getNewConnection()
+										.getInetAddress() + " is invalid");
+						e.printStackTrace();
+					}
+					// If a message is present save it
+					if (message != null) {
+						Date d = new Date();
+						Timestamp t = new Timestamp(d.getTime());
+						messages.put(t, message);
+						history.put(t, message);
+						System.out.println("[ReceiveServer]Message received: \n"+message+"\n");
+					}
 				}
 			}
 
@@ -200,20 +233,26 @@ class SendServer implements Runnable {
 
 		while (true) {
 
-			Iterator it = ReceiveServer.getMessages().entrySet().iterator();
-			Iterator clients = AcceptServer.getClients().entrySet().iterator();
+			if (AcceptServer.getClients() != null) {
+				Iterator it = ReceiveServer.getMessages().entrySet().iterator();
+				Iterator clients = AcceptServer.getClients().entrySet()
+						.iterator();
+				while (it.hasNext()) {
+					Map.Entry<Timestamp, String> message = (Map.Entry) it
+							.next();
+					System.out.println("[SendServer]Message sent: \n"+message.getValue()+"\n");
 
-			while (it.hasNext()) {
-				Map.Entry<Timestamp, String> message = (Map.Entry) it.next();
+					while (clients.hasNext()) {
+						Map.Entry<Timestamp, Connection> client = (Map.Entry) clients
+								.next();
+						client.getValue().createPrintWriter()
+								.println(message.getValue());
+					}
+					ReceiveServer.getMessages().remove(message.getKey());
 
-				while (clients.hasNext()) {
-					Map.Entry<Timestamp, Connection> client = (Map.Entry) clients.next();
-					client.getValue().createPrintWriter().println(message.getValue());
 				}
-				ReceiveServer.getMessages().remove(message.getKey());
 
 			}
-
 		}
 
 	}
