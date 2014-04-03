@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -8,21 +10,21 @@ import java.net.UnknownHostException;
 
 
 public class Connection {
-private Socket newConnection;
+private Socket socket;
 private String hostName;
 
 
 
 	public Connection(Socket newConnection) {
 	super();
-	this.newConnection = newConnection;
+	this.socket = newConnection;
 	hostName = newConnection.getInetAddress().getHostName();
 }
 
-	public  BufferedReader createBufferedReader () {
-		BufferedReader in = null;
+	public  DataInputStream createBufferedReader () {
+		DataInputStream in = null;
 		try {				            
-			in = new BufferedReader( new InputStreamReader(newConnection.getInputStream()));	        
+			in = new DataInputStream(socket.getInputStream());	        
 			
 		} catch (UnknownHostException e) {
 			System.err.println("Don't know about host " + hostName);
@@ -34,10 +36,10 @@ private String hostName;
 		return in;
 	}
 
-	public  PrintWriter createPrintWriter () {
-		PrintWriter out = null;
+	public  DataOutputStream createPrintWriter () {
+		DataOutputStream out = null;
 		try {			
-				out = new PrintWriter(newConnection.getOutputStream(), true);				
+				out = new DataOutputStream(socket.getOutputStream());				
 
 
 		} catch (UnknownHostException e) {
@@ -53,11 +55,11 @@ private String hostName;
 	}
 
 	public Socket getNewConnection() {
-		return newConnection;
+		return socket;
 	}
 
 	public void setNewConnection(Socket newConnection) {
-		this.newConnection = newConnection;
+		this.socket = newConnection;
 	}
 	
 	

@@ -4,6 +4,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -23,10 +24,9 @@ public class Client extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private Connection con;
 	private String name;
-	private final int initialPort = 4001;
+	private final int port = 4001;
 	private boolean clientAccepted;
 	private InetAddress host;
-	int port;
 	private static ArrayList<String> history;
 	final JTextArea textArea = new JTextArea(25, 80);
 	final JTextField userInputField = new JTextField(45);
@@ -35,7 +35,7 @@ public class Client extends JFrame {
 		super();
 		this.con = null;
 		this.name = null;
-		clientAccepted = true;
+		clientAccepted = false;
 		initialize();
 		run();
 	}
@@ -105,24 +105,13 @@ public class Client extends JFrame {
 				}
 
 			}
-
-			con = new Connection(new Socket(host, initialPort));
-
 			
 			//Handshake with Server
-			while (clientAccepted) {
-				this.con.createPrintWriter().println("MarcoG" + this.getName());
-				System.out.println(this.getName());
-				String newport = con.createBufferedReader().readLine();
-
-				if (newport != null) {
-
-					System.out.println(newport);
-					port = Integer.valueOf(newport);
+				if (host != null) {				
 					try {
-						con = new Connection(new Socket(host, port));
+						con = new Connection(new Socket(host, port ));
 						this.setCon(con);
-						clientAccepted = false;
+						clientAccepted = true;
 						textArea.append("Welcome "
 								+ this.getName()
 								+ " you are connected to \nHostname: "
@@ -161,7 +150,12 @@ public class Client extends JFrame {
 						ServerMessage s = new ServerMessage(fromUser, name,
 								host, port);
 						// textArea.append(s.toString());
-						con.createPrintWriter().println(s.toString());
+						try {
+							con.createPrintWriter().writeUTF(s.toString());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 						textArea.setCaretPosition(textArea.getDocument()
 								.getLength());
 						userInputField.setText("");
@@ -178,7 +172,6 @@ public class Client extends JFrame {
 			this.setVisible(true);
 
 		}
-	}
 
 	/**
 	 * Receive messages 
@@ -186,10 +179,9 @@ public class Client extends JFrame {
 	 * @throws IOException
 	 */
 	public void run() throws IOException {
-
+		DataInputStream in = con.createBufferedReader();
 		while (true) {
-			String fromServer = con.createBufferedReader().readLine();
-
+			String fromServer = in.readUTF();
 			if (fromServer != null) {
 
 				if (!history.contains(fromServer)) {
@@ -227,10 +219,6 @@ public class Client extends JFrame {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public int getInitialPort() {
-		return initialPort;
 	}
 
 	public boolean isClientAccepted() {

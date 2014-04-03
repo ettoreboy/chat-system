@@ -5,32 +5,37 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Server class implements multi-thread modules
  * 
  * @author ettore
- *
+ * 
  */
 public class Server {
 	private final ScheduledExecutorService worker;
-    private Thread as, rs, ss, cs;
-    
-    /**
-     * Server constructor. It handles the threads for the different modules.
-     */
+	private Thread as, rs, ss, cs;
+
+	/**
+	 * Server constructor. It handles the threads for the different modules.
+	 */
 	public Server() {
-		        
-				worker =  Executors.newSingleThreadScheduledExecutor();
+
+		worker = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	public void acceptClients() {
@@ -43,22 +48,24 @@ public class Server {
 	public void receiveMessages() {
 		ReceiveServer rs = new ReceiveServer();
 		this.rs = new Thread(rs);
-		worker.schedule(this.rs, 2, TimeUnit.SECONDS);
+		// worker.schedule(this.rs, 1, TimeUnit.SECONDS);
+		this.rs.start();
 	}
 
 	public void sendMessages() {
 		SendServer ss = new SendServer();
 		this.ss = new Thread(ss);
-		worker.schedule(this.ss, 2, TimeUnit.SECONDS);
-	}
-	
-	public void closeConnections() {
-		Consuela cleans = new Consuela();
-		cs = new Thread(cleans);
-		worker.schedule(this.cs, 3, TimeUnit.SECONDS);
+		// worker.schedule(this.ss, 2, TimeUnit.SECONDS);
+		this.ss.start();
 	}
 
-	
+	public void closeConnections() {
+		Consuela cleans = new Consuela();
+		this.cs = new Thread(cleans);
+		// worker.schedule(this.cs, 2, TimeUnit.SECONDS);
+		this.cs.start();
+	}
+
 	// Launch Server
 	public static void main(String[] args) {
 		Server s = new Server();
@@ -68,8 +75,8 @@ public class Server {
 		System.out.println("[Server]Receive Module initialized.");
 		s.sendMessages();
 		System.out.println("[Server]Send Module initialized.");
-		s.closeConnections();
-		System.out.println("[Server]Consuela started cleaning.. Nono");
+		// s.closeConnections();
+		// System.out.println("[Server]Consuela started cleaning.. Nono");
 
 	}
 
@@ -86,27 +93,27 @@ class AcceptServer implements Runnable {
 	private int listeningPort = 4001;
 	private static ServerSocket listeningSocket;
 	private boolean acceptClient = true;
-	int randomkey;
-	private static Map<Integer, Connection> clients;
 
-	public static Map<Integer, Connection> getClients() {
+	private static List<Connection> clients;
+
+	public static List<Connection> getClients() {
 		return clients;
 	}
 
-	public void setClients(Map<Integer, Connection> clients) {
-		this.clients = clients;
+	public static void setClients(ArrayList<Connection> clients) {
+		AcceptServer.clients = clients;
 	}
 
 	@Override
 	public void run() {
-        int clientsSize = 0;
 		try {
 			if (listeningSocket != null) {
 				listeningSocket.close();
 			}
 
 			listeningSocket = new ServerSocket(listeningPort);
-			clients = new HashMap<Integer, Connection>();
+			clients = new CopyOnWriteArrayList<Connection>();
+			;
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -117,42 +124,13 @@ class AcceptServer implements Runnable {
 
 		while (acceptClient) {
 			try {
-				//listen to 4001 until a client knocks
+				// listen to 4001 until a client knocks
 				Socket clientSocket = listeningSocket.accept();
 				Connection con = new Connection(clientSocket);
-				String user = con.createBufferedReader().readLine();
 
-				// Handshake here with code word
-				if (user != null && user.contains("MarcoG")) {
-					user = user.replaceAll("MarcoG", "");
-					// Generate random free port
-					ServerSocket server = new ServerSocket(0);
-					int port = server.getLocalPort();
-					
-					// Send new port and listen to it.
-					con.createPrintWriter().println(port);
-					clientSocket = server.accept();
-					Connection con2 = new Connection(clientSocket);
-					clientsSize++;
-					clients.put(clientsSize, con2);
-
-				
-					System.out.println("Accepted a new connection.");
-					System.out.println("User is on port: " + port);
-					System.out.println("Username is: " + user);
-					
-					Iterator<?> it = AcceptServer.getClients().entrySet()
-							.iterator();
-					Map.Entry<Integer, Connection> pair;				
-					
-					while (it.hasNext()) {
-						
-						 pair = (Map.Entry) it.next();
-						 System.out.println("[ClientList]Client "+clientsSize+" on port "+pair.getValue().getNewConnection().getPort());
-					
-					}
-
-				}
+				clients.add(con);
+				System.out.println("Total clients now: "
+						+ AcceptServer.getClients().size());
 
 			} catch (IOException e) {
 				System.err
@@ -166,11 +144,11 @@ class AcceptServer implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
 	 * Get your current ip
+	 * 
 	 * @return
 	 */
 	public String getMyIp() {
@@ -204,53 +182,62 @@ class AcceptServer implements Runnable {
  * 
  */
 class ReceiveServer implements Runnable {
-	private static Map<Timestamp, String> messages;
-	private static Map<Timestamp, String> history;
+	private static List<String> messages;
+	private static List<String> history;
 
-	public static Map<Timestamp, String> getMessages() {
+	public static List<String> getMessages() {
 		return messages;
 	}
 
-	public static void setMessages(Map<Timestamp, String> messages) {
+	public static void setMessages(ArrayList<String> messages) {
 		ReceiveServer.messages = messages;
 	}
 
-	public static Map<Timestamp, String> getHistory() {
+	public static List<String> getHistory() {
 		return history;
 	}
 
-	public static void setHistory(Map<Timestamp, String> history) {
+	public static void setHistory(ArrayList<String> history) {
 		ReceiveServer.history = history;
 	}
 
 	@Override
 	public void run() {
-		messages = new HashMap<Timestamp, String>();
-		history = new HashMap<Timestamp, String>();
+		messages = new CopyOnWriteArrayList<String>();
+		history = new CopyOnWriteArrayList<String>();
 		while (true) {
 
-			if (AcceptServer.getClients() != null) {
-				Iterator<?> it = AcceptServer.getClients().entrySet()
-						.iterator();
-				while (it.hasNext()) {
-					Map.Entry<Integer, Connection> pair = (Map.Entry) it.next();
+			if (AcceptServer.getClients() != null
+					&& !AcceptServer.getClients().isEmpty()) {
+				List<Connection> clientList = AcceptServer.getClients();
+
+				for (Connection client : clientList) {
+
+					// If the connection is closed remove the client
+					//System.out.println(client.getNewConnection()
+							//.getInetAddress());
+					//System.out.println(client.getNewConnection().isConnected());
+					//System.out.println(client.getNewConnection().isBound());
+					//System.out.println(client.getNewConnection().isInputShutdown());
 					String message = null;
 					try {
-						message = pair.getValue().createBufferedReader()
-								.readLine();
+						if (client.getNewConnection() != null) {
+							// Read message from object client Connection
+							message = client.createBufferedReader().readUTF();
+						} else {
+							AcceptServer.getClients().remove(client);
+						}
 					} catch (IOException e) {
-						System.err.println(message
-								+ " was read from socket "
-								+ pair.getValue().getNewConnection()
-										.getInetAddress() + " is invalid");
+						System.err.println(message + " was read from socket "
+								+ client.getNewConnection().getInetAddress()
+								+ " is invalid");
 						e.printStackTrace();
+
 					}
 					// If a message is present save it
 					if (message != null) {
-						Date d = new Date();
-						Timestamp t = new Timestamp(d.getTime());
-						messages.put(t, message);
-						history.put(t, message);
+						messages.add(message);
+						history.add(message);
 						System.out
 								.println("[ReceiveServer]Message received: \n"
 										+ message + "\n");
@@ -277,22 +264,27 @@ class SendServer implements Runnable {
 		while (true) {
 
 			if (AcceptServer.getClients() != null) {
-				Iterator it = ReceiveServer.getMessages().entrySet().iterator();
-				Iterator clients = AcceptServer.getClients().entrySet()
+				Iterator<String> messages = ReceiveServer.getMessages()
 						.iterator();
-				while (it != null && it.hasNext()) {
-					Map.Entry<Timestamp, String> message = (Map.Entry) it
-							.next();
-					System.out.println("[SendServer]Message sent: \n"
-							+ message.getValue() + "\n");
+				Iterator<Connection> clients = AcceptServer.getClients()
+						.iterator();
+				while (messages.hasNext()) {
+					String message = messages.next();
+					System.out.println("[SendServer]Message sent: \n" + message
+							+ "\n");
 
 					while (clients.hasNext()) {
-						Map.Entry<Integer, Connection> client = (Map.Entry) clients
-								.next();
-						client.getValue().createPrintWriter()
-								.println(message.getValue());
+						Connection client = clients.next();
+						try {
+							client.createPrintWriter().writeUTF(
+									message.toString());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
 					}
-					ReceiveServer.getMessages().remove(message.getKey());
+					ReceiveServer.getMessages().remove(message);
 
 				}
 
@@ -314,14 +306,15 @@ class Consuela implements Runnable {
 
 			if (AcceptServer.getClients() != null) {
 
-				Iterator clients = AcceptServer.getClients().entrySet()
+				Iterator<Connection> clients = AcceptServer.getClients()
 						.iterator();
 				while (clients.hasNext()) {
-					Map.Entry<InetAddress, Connection> client = (Map.Entry) clients
-							.next();
-					if(client.getValue().getNewConnection().isClosed()){
-						AcceptServer.getClients().remove(client.getKey());
-						System.out.println("[Server]Consuela closed:" +client.getKey()+"on port: " +client.getValue().getNewConnection().getLocalPort()+"\n");
+					Connection client = clients.next();
+					if (client.getNewConnection().isClosed()) {
+						AcceptServer.getClients().remove(client);
+						System.out.println("[Server]Consuela closed:"
+								+ client.getNewConnection().getInetAddress()
+										.getHostName());
 					}
 
 				}
