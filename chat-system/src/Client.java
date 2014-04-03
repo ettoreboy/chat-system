@@ -1,3 +1,4 @@
+
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -69,6 +70,8 @@ public class Client extends JFrame {
 		inputPanel.add(Box.createHorizontalStrut(15));
 		inputPanel.add(hostname);
 
+		//At initialization, ask the user for username and host.
+		
 		int answ = JOptionPane.showConfirmDialog(this, inputPanel,
 				"Enter credentials", JOptionPane.YES_NO_OPTION);
 
@@ -105,6 +108,8 @@ public class Client extends JFrame {
 
 			con = new Connection(new Socket(host, initialPort));
 
+			
+			//Handshake with Server
 			while (clientAccepted) {
 				this.con.createPrintWriter().println("MarcoG" + this.getName());
 				System.out.println(this.getName());
@@ -120,9 +125,9 @@ public class Client extends JFrame {
 						clientAccepted = false;
 						textArea.append("Welcome "
 								+ this.getName()
-								+ "you are connected to Hostname: "
+								+ " you are connected to \nHostname: "
 								+ con.getNewConnection().getInetAddress()
-										.getHostName() + "Port: "
+										.getHostName() + "\nPort: "
 								+ con.getNewConnection().getPort() + "\n");
 					} catch (IOException e) {
 						System.err
@@ -176,7 +181,7 @@ public class Client extends JFrame {
 	}
 
 	/**
-	 * Receive messages
+	 * Receive messages 
 	 * 
 	 * @throws IOException
 	 */
@@ -207,6 +212,7 @@ public class Client extends JFrame {
 		}
 	}
 
+	//Getters and Setters
 	public Connection getCon() {
 		return con;
 	}

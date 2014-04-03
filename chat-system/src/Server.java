@@ -12,41 +12,53 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * 
+ * @author ettore
+ *
+ */
 public class Server {
-
+	private final ScheduledExecutorService worker;
+    private Thread as, rs, ss, cs;
+    
+    /**
+     * Server constructor. It handles the threads for the different modules.
+     */
 	public Server() {
+		        
+				worker =  Executors.newSingleThreadScheduledExecutor();
 	}
 
 	public void acceptClients() {
 		AcceptServer as = new AcceptServer();
-		Thread t;
-		t = new Thread(as);
-		t.start();
+		this.as = new Thread(as);
+		this.as.start();
 
 	}
 
 	public void receiveMessages() {
 		ReceiveServer rs = new ReceiveServer();
-		Thread t;
-		t = new Thread(rs);
-		t.start();
+		this.rs = new Thread(rs);
+		worker.schedule(this.rs, 2, TimeUnit.SECONDS);
 	}
 
 	public void sendMessages() {
 		SendServer ss = new SendServer();
-		Thread t;
-		t = new Thread(ss);
-		t.start();
+		this.ss = new Thread(ss);
+		worker.schedule(this.ss, 2, TimeUnit.SECONDS);
 	}
 	
 	public void closeConnections() {
 		Consuela cleans = new Consuela();
-		Thread t;
-		t = new Thread(cleans);
-		t.start();
+		cs = new Thread(cleans);
+		worker.schedule(this.cs, 3, TimeUnit.SECONDS);
 	}
 
+	
 	// Launch Server
 	public static void main(String[] args) {
 		Server s = new Server();
@@ -56,8 +68,8 @@ public class Server {
 		System.out.println("[Server]Receive Module initialized.");
 		s.sendMessages();
 		System.out.println("[Server]Send Module initialized.");
-		//s.closeConnections();
-		//System.out.println("[Server]Consuela started cleaning.. Nono");
+		s.closeConnections();
+		System.out.println("[Server]Consuela started cleaning.. Nono");
 
 	}
 
@@ -105,12 +117,12 @@ class AcceptServer implements Runnable {
 
 		while (acceptClient) {
 			try {
-
+				//listen to 4001 until a client knocks
 				Socket clientSocket = listeningSocket.accept();
 				Connection con = new Connection(clientSocket);
 				String user = con.createBufferedReader().readLine();
 
-				// Handshake here
+				// Handshake here with code word
 				if (user != null && user.contains("MarcoG")) {
 					user = user.replaceAll("MarcoG", "");
 					// Generate random free port
@@ -118,7 +130,6 @@ class AcceptServer implements Runnable {
 					int port = server.getLocalPort();
 					
 					// Send new port and listen to it.
-					
 					con.createPrintWriter().println(port);
 					clientSocket = server.accept();
 					Connection con2 = new Connection(clientSocket);
@@ -132,7 +143,7 @@ class AcceptServer implements Runnable {
 					
 					Iterator<?> it = AcceptServer.getClients().entrySet()
 							.iterator();
-					Map.Entry<InetAddress, Connection> pair;				
+					Map.Entry<Integer, Connection> pair;				
 					
 					while (it.hasNext()) {
 						
@@ -187,7 +198,7 @@ class AcceptServer implements Runnable {
 }
 
 /**
- * Receive messages from all clients and store them in a HashMap. Yo.
+ * Receive messages from all clients and store them in a HashMap as a Stack
  * 
  * @author ettore
  * 
