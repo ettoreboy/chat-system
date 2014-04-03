@@ -4,21 +4,13 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Server class implements multi-thread modules
@@ -207,40 +199,38 @@ class ReceiveServer implements Runnable {
 		history = new CopyOnWriteArrayList<String>();
 		while (true) {
 
-			if (AcceptServer.getClients() != null
-					&& !AcceptServer.getClients().isEmpty()) {
-				List<Connection> clientList = AcceptServer.getClients();
+			synchronized (messages) {
+				if (AcceptServer.getClients() != null
+						&& !AcceptServer.getClients().isEmpty()) {
+					List<Connection> clientList = AcceptServer.getClients();
 
-				for (Connection client : clientList) {
+					for (Connection client : clientList) {
 
-					// If the connection is closed remove the client
-					//System.out.println(client.getNewConnection()
-							//.getInetAddress());
-					//System.out.println(client.getNewConnection().isConnected());
-					//System.out.println(client.getNewConnection().isBound());
-					//System.out.println(client.getNewConnection().isInputShutdown());
-					String message = null;
-					try {
-						if (client.getNewConnection() != null) {
-							// Read message from object client Connection
-							message = client.createBufferedReader().readUTF();
-						} else {
-							AcceptServer.getClients().remove(client);
+						String message = null;
+						try {
+							if (client.getNewConnection() != null) {
+								// Read message from object client Connection
+								message = client.createBufferedReader()
+										.readUTF();
+							} else {
+								AcceptServer.getClients().remove(client);
+							}
+						} catch (IOException e) {
+							System.err.println(message
+									+ " was read from socket "
+									+ client.getNewConnection()
+											.getInetAddress() + " is invalid");
+							e.printStackTrace();
+
 						}
-					} catch (IOException e) {
-						System.err.println(message + " was read from socket "
-								+ client.getNewConnection().getInetAddress()
-								+ " is invalid");
-						e.printStackTrace();
-
-					}
-					// If a message is present save it
-					if (message != null) {
-						messages.add(message);
-						history.add(message);
-						System.out
-								.println("[ReceiveServer]Message received: \n"
-										+ message + "\n");
+						// If a message is present save it
+						if (message != null) {
+							messages.add(message);
+							history.add(message);
+							System.out
+									.println("[ReceiveServer]Message received: \n"
+											+ message + "\n");
+						}
 					}
 				}
 			}
@@ -263,31 +253,36 @@ class SendServer implements Runnable {
 
 		while (true) {
 
-			if (AcceptServer.getClients() != null) {
-				Iterator<String> messages = ReceiveServer.getMessages()
-						.iterator();
-				Iterator<Connection> clients = AcceptServer.getClients()
-						.iterator();
-				while (messages.hasNext()) {
-					String message = messages.next();
-					System.out.println("[SendServer]Message sent: \n" + message
-							+ "\n");
+			synchronized (AcceptServer.getClients()) {
+				synchronized (ReceiveServer.getMessages()) {
 
-					while (clients.hasNext()) {
-						Connection client = clients.next();
-						try {
-							client.createPrintWriter().writeUTF(
-									message.toString());
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+					if (AcceptServer.getClients() != null) {
+						Iterator<String> messages = ReceiveServer.getMessages()
+								.iterator();
+						Iterator<Connection> clients = AcceptServer
+								.getClients().iterator();
+						while (messages.hasNext()) {
+							String message = messages.next();
+							System.out.println("[SendServer]Message sent: \n"
+									+ message + "\n");
+
+							while (clients.hasNext()) {
+								Connection client = clients.next();
+								try {
+									client.createPrintWriter().writeUTF(
+											message.toString());
+								} catch (IOException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+
+							}
+							ReceiveServer.getMessages().remove(message);
+
 						}
 
 					}
-					ReceiveServer.getMessages().remove(message);
-
 				}
-
 			}
 		}
 
