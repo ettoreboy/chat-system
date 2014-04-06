@@ -3,7 +3,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
-import java.io.EOFException;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -21,7 +21,7 @@ import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 
-public class Client extends JFrame {
+public class Client extends JFrame implements Runnable{
 	/**
 	 * 
 	 */
@@ -32,8 +32,11 @@ public class Client extends JFrame {
 	private boolean clientAccepted;
 	private InetAddress host;
 	private ArrayList<String> history;
-	final JTextArea textArea = new JTextArea(25, 80);
-	final JTextField userInputField = new JTextField(53);
+	private JTextArea textArea = new JTextArea(25, 80);
+	private JTextField userInputField = new JTextField(53);
+	
+	private DataInputStream in;
+	private DataOutputStream out;
 
 	public Client() throws UnknownHostException, IOException {
 		super();
@@ -41,7 +44,7 @@ public class Client extends JFrame {
 		this.name = null;
 		clientAccepted = false;
 		initialize();
-		run();
+		new Thread(this).start();
 	}
 
 	/**
@@ -137,7 +140,10 @@ public class Client extends JFrame {
 			}
 		}
 		System.out.println("Connection established.");
-
+		
+		in = con.createBufferedReader();
+		out = con.createPrintWriter();
+		
 		JScrollPane scrollPane = new JScrollPane(textArea);
 		scrollPane.setPreferredSize(new Dimension(585, 150));
 		textArea.setLineWrap(true);
@@ -152,9 +158,8 @@ public class Client extends JFrame {
 		this.getContentPane().add(userInputField, SwingConstants.CENTER);
 		this.getContentPane().add(scrollPane, SwingConstants.CENTER);
 
+		
 		userInputField.addActionListener(new ActionListener() {
-
-			@Override
 			public void actionPerformed(ActionEvent event) {
 				String fromUser = userInputField.getText();
 
@@ -163,7 +168,7 @@ public class Client extends JFrame {
 					// textArea.append(s.toString());
 					synchronized (history) {
 						try {
-							con.createPrintWriter().writeUTF(s.toString());
+							out.writeUTF(s.toString());
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -187,11 +192,9 @@ public class Client extends JFrame {
 
 	/**
 	 * Receive messages
-	 * 
-	 * @throws IOException
 	 */
-	public void run() throws IOException {
-		DataInputStream in = con.createBufferedReader();
+	@Override
+	public void run() {
 		while (true) {
 			try {
 				String fromServer = in.readUTF();
@@ -219,7 +222,7 @@ public class Client extends JFrame {
 						}
 					}
 				}
-			} catch (EOFException e) {
+			} catch (IOException e) {
 				System.out.println("[ERROR] " + host
 						+ " no longer available. Closing..");
 				System.exit(-1);

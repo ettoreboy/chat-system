@@ -27,9 +27,9 @@ public class ServerThread extends Thread {
 		try {
 			DataInputStream din = new DataInputStream(socket.getInputStream());
 			while (true) {
-				synchronized (server.getHistory()) {
+				synchronized (Server.getHistory()) {
 					String message = din.readUTF();
-					if(!server.getHistory().contains(message)){
+					if(!Server.getHistory().contains(message)){
 						server.saveMessage(message);
 					}
 					System.out.println("Sending " + message);
