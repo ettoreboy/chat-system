@@ -64,10 +64,13 @@ public class Client extends JFrame {
 		hostname.setText("localhost");
 		JTextPane username = new JTextPane();
 		username.setText("Username..");
+		hostname.setPreferredSize(new Dimension(150, 20));
+		username.setPreferredSize(new Dimension(150, 20));
 		JPanel inputPanel = new JPanel();
 		inputPanel.add(username);
-		inputPanel.add(Box.createHorizontalStrut(15));
+		inputPanel.add(Box.createHorizontalStrut(20));
 		inputPanel.add(hostname);
+		inputPanel.setPreferredSize(new Dimension(350, 50));
 
 		// At initialization, ask the user for username and host.
 
@@ -134,7 +137,7 @@ public class Client extends JFrame {
 		scrollPane
 				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-		System.out.println("Gui instantiated");
+		System.out.println("GUI instantiated");
 
 		this.setLayout(new FlowLayout());
 		this.getContentPane().add(userInputField, SwingConstants.CENTER);
