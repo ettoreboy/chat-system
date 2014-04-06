@@ -29,7 +29,7 @@ public class Client extends JFrame {
 	private InetAddress host;
 	private ArrayList<String> history;
 	final JTextArea textArea = new JTextArea(25, 80);
-	final JTextField userInputField = new JTextField(45);
+	final JTextField userInputField = new JTextField(53);
 
 	public Client() throws UnknownHostException, IOException {
 		super();
@@ -71,7 +71,7 @@ public class Client extends JFrame {
 		inputPanel.add(username);
 		inputPanel.add(Box.createHorizontalStrut(20));
 		inputPanel.add(hostname);
-		inputPanel.setPreferredSize(new Dimension(350, 50));
+		inputPanel.setPreferredSize(new Dimension(350, 40));
 
 		// At initialization, ask the user for username and host.
 
@@ -131,7 +131,7 @@ public class Client extends JFrame {
 		System.out.println("Connection established.");
 
 		JScrollPane scrollPane = new JScrollPane(textArea);
-		scrollPane.setPreferredSize(new Dimension(500, 100));
+		scrollPane.setPreferredSize(new Dimension(600, 150));
 		textArea.setLineWrap(true);
 		textArea.setWrapStyleWord(true);
 		textArea.setEditable(false);
@@ -168,7 +168,7 @@ public class Client extends JFrame {
 		});
 
 		this.setVisible(true);
-		this.setSize(600, 170);
+		this.setSize(600, 225);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setResizable(false);
 
