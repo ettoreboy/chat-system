@@ -3,6 +3,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -17,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 
 public class Client extends JFrame {
@@ -85,7 +87,7 @@ public class Client extends JFrame {
 		}
 
 		else {
-			
+
 			setName(username.getText().replaceAll("\n", ""));
 
 			if (hostname.getText().isEmpty()) {
@@ -122,9 +124,11 @@ public class Client extends JFrame {
 							+ this.getName()
 							+ " you are connected to \nHostname: "
 							+ con.getNewConnection().getInetAddress()
-									.getHostName() + "\nPort: "
-							+ con.getNewConnection().getPort() + "\n"
-									+ "--------------------------------------------------------");
+									.getHostName()
+							+ "\nPort: "
+							+ con.getNewConnection().getPort()
+							+ "\n"
+							+ "--------------------------------------------------------\n");
 				} catch (IOException e) {
 					System.err
 							.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
@@ -140,7 +144,7 @@ public class Client extends JFrame {
 		textArea.setWrapStyleWord(true);
 		textArea.setEditable(false);
 		scrollPane
-				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+				.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
 		System.out.println("GUI instantiated");
 
@@ -150,6 +154,7 @@ public class Client extends JFrame {
 
 		userInputField.addActionListener(new ActionListener() {
 
+			@Override
 			public void actionPerformed(ActionEvent event) {
 				String fromUser = userInputField.getText();
 
@@ -163,7 +168,8 @@ public class Client extends JFrame {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						textArea.setCaretPosition(textArea.getDocument().getLength());
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
 						userInputField.setText("");
 						history.add(s.toString());
 					}
@@ -187,28 +193,38 @@ public class Client extends JFrame {
 	public void run() throws IOException {
 		DataInputStream in = con.createBufferedReader();
 		while (true) {
-			String fromServer = in.readUTF();
-			if (fromServer != null) {
+			try {
+				String fromServer = in.readUTF();
+				if (fromServer != null) {
 
-				System.out.println("\n\n");
-				synchronized (history) {
-					if (history.contains(fromServer)) {
-						textArea.append("     Me: ");
-						textArea.append(fromServer.split("\\[")[2].split("\\]")[0] + "\n");
-						//textArea.append(fromServer + "\n");
-						textArea.setCaretPosition(textArea.getDocument().getLength());
-						userInputField.setText("");
-					} else {
-						textArea.append(fromServer.split("\\[")[1].split("\\]")[0] + ": " + fromServer.split("\\[")[2].split("\\]")[0] + "\n");
-						//textArea.append(fromServer.toString() + "\n");
-						textArea.setCaretPosition(textArea.getDocument().getLength());
-						userInputField.setText("");
+					System.out.println("\n\n");
+					synchronized (history) {
+						if (history.contains(fromServer)) {
+							textArea.append("     Me: ");
+							textArea.append(fromServer.split("\\[")[2]
+									.split("\\]")[0] + "\n");
+							// textArea.append(fromServer + "\n");
+							textArea.setCaretPosition(textArea.getDocument()
+									.getLength());
+							userInputField.setText("");
+						} else {
+							textArea.append(fromServer.split("\\[")[1]
+									.split("\\]")[0]
+									+ ": "
+									+ fromServer.split("\\[")[2].split("\\]")[0]
+									+ "\n");
+							// textArea.append(fromServer.toString() + "\n");
+							textArea.setCaretPosition(textArea.getDocument()
+									.getLength());
+							userInputField.setText("");
+						}				
 					}
-					System.out.println("Tot. messages sent:" + history.size());
-					System.out.println("Last Message:"
-							+ history.get(history.size() - 1));
-
 				}
+			} catch (EOFException e) {
+				System.out.println("[ERROR] " + host
+						+ " no longer available. Closing..");
+				System.exit(-1);
+
 			}
 		}
 	}
@@ -222,10 +238,12 @@ public class Client extends JFrame {
 		this.con = con;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}

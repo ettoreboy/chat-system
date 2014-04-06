@@ -43,7 +43,7 @@ public class Server implements ActionListener {
 	 * @throws IOException
 	 */
 	protected Server() throws IOException {
-
+		history = new ArrayList();
 		listen();
 	}
 

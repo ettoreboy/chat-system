@@ -8,6 +8,7 @@ public class ServerThread extends Thread {
 
 	/**
 	 * Constructor ServerThread. Refers to server and a socket for the client.
+	 * 
 	 * @param server
 	 * @param socket
 	 */
@@ -17,7 +18,6 @@ public class ServerThread extends Thread {
 		server.sendHistory(this.socket);
 		start();
 	}
-	
 
 	/**
 	 * Run instruction for a single server thread
@@ -27,9 +27,14 @@ public class ServerThread extends Thread {
 		try {
 			DataInputStream din = new DataInputStream(socket.getInputStream());
 			while (true) {
-				String message = din.readUTF();
-				System.out.println("Sending " + message);
-				server.sendToAll(message);
+				synchronized (server.getHistory()) {
+					String message = din.readUTF();
+					if(!server.getHistory().contains(message)){
+						server.saveMessage(message);
+					}
+					System.out.println("Sending " + message);
+					server.sendToAll(message);
+				}
 			}
 		} catch (EOFException ie) {
 		} catch (IOException ie) {
