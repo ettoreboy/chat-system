@@ -2,19 +2,22 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.Box;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
 
 public class Client extends JFrame {
 	/**
@@ -82,7 +85,8 @@ public class Client extends JFrame {
 		}
 
 		else {
-			this.setName(username.getText());
+			
+			setName(username.getText().replaceAll("\n", ""));
 
 			if (hostname.getText().isEmpty()) {
 				JOptionPane.showMessageDialog(null, hostname.getText()
@@ -119,7 +123,8 @@ public class Client extends JFrame {
 							+ " you are connected to \nHostname: "
 							+ con.getNewConnection().getInetAddress()
 									.getHostName() + "\nPort: "
-							+ con.getNewConnection().getPort() + "\n");
+							+ con.getNewConnection().getPort() + "\n"
+									+ "--------------------------------------------------------");
 				} catch (IOException e) {
 					System.err
 							.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");

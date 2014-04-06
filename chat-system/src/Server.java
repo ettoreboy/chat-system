@@ -175,38 +175,41 @@ public class Server implements ActionListener {
 			}
 		}
 	}
-	
+
 	/**
 	 * Save messages in the Server for late client.
+	 * 
 	 * @param s
 	 */
-	public void saveMessage(String s){
-		if(history == null){
+	public void saveMessage(String s) {
+		if (history == null) {
 			history = new ArrayList<String>();
 		}
 		history.add(s);
 	}
-	
+
 	/**
-	 * Send all the history to one socket
+	 * Send all the history message to one socket
+	 * 
 	 * @param s
 	 */
-	public void sendHistory(Socket s){
-		if (history != null && !history.isEmpty()){
-		try {
-			DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-			for (String old : history) {
-				System.out.println("Sending " + old);
-				dout.writeUTF(old);
+	public void sendHistory(Socket s) {
+		if (history != null && !history.isEmpty()) {
+			try {
+				DataOutputStream dout = new DataOutputStream(
+						s.getOutputStream());
+				for (String old : history) {
+					System.out.println("Sending " + old);
+					dout.writeUTF(old);
+				}
+			} catch (EOFException ie) {
+			} catch (IOException ie) {
+				ie.printStackTrace();
+			} finally {
+				
 			}
-		} catch (EOFException ie) {
-		} catch (IOException ie) {
-			ie.printStackTrace();
-		} finally {
-			
 		}
-		}
-		
+
 	}
 
 	/**
@@ -273,7 +276,6 @@ public class Server implements ActionListener {
 		}
 
 	}
-	
 
 	public static ArrayList<String> getHistory() {
 		return history;
