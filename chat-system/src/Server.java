@@ -231,7 +231,7 @@ public class Server implements ActionListener {
 			list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 			list.setVisibleRowCount(-1);
 			JScrollPane listScroller = new JScrollPane(list);
-			listScroller.setPreferredSize(new Dimension(500, 220));
+			listScroller.setPreferredSize(new Dimension(585, 218));
 			clientList.add(listScroller);
 		}
 		main.getContentPane().add(clientList, BorderLayout.CENTER);
