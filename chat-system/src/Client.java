@@ -1,4 +1,3 @@
-
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -27,7 +26,7 @@ public class Client extends JFrame {
 	private final int port = 4001;
 	private boolean clientAccepted;
 	private InetAddress host;
-	private static ArrayList<String> history;
+	private ArrayList<String> history;
 	final JTextArea textArea = new JTextArea(25, 80);
 	final JTextField userInputField = new JTextField(45);
 
@@ -70,8 +69,8 @@ public class Client extends JFrame {
 		inputPanel.add(Box.createHorizontalStrut(15));
 		inputPanel.add(hostname);
 
-		//At initialization, ask the user for username and host.
-		
+		// At initialization, ask the user for username and host.
+
 		int answ = JOptionPane.showConfirmDialog(this, inputPanel,
 				"Enter credentials", JOptionPane.YES_NO_OPTION);
 
@@ -105,76 +104,74 @@ public class Client extends JFrame {
 				}
 
 			}
-			
-			//Handshake with Server
-				if (host != null) {				
-					try {
-						con = new Connection(new Socket(host, port ));
-						this.setCon(con);
-						clientAccepted = true;
-						textArea.append("Welcome "
-								+ this.getName()
-								+ " you are connected to \nHostname: "
-								+ con.getNewConnection().getInetAddress()
-										.getHostName() + "\nPort: "
-								+ con.getNewConnection().getPort() + "\n");
-					} catch (IOException e) {
-						System.err
-								.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
-						e.printStackTrace();
-					}
+
+			// Handshake with Server
+			if (host != null) {
+				try {
+					con = new Connection(new Socket(host, port));
+					this.setCon(con);
+					clientAccepted = true;
+					textArea.append("Welcome "
+							+ this.getName()
+							+ " you are connected to \nHostname: "
+							+ con.getNewConnection().getInetAddress()
+									.getHostName() + "\nPort: "
+							+ con.getNewConnection().getPort() + "\n");
+				} catch (IOException e) {
+					System.err
+							.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
+					e.printStackTrace();
 				}
 			}
-			System.out.println("Connection established.");
-
-			JScrollPane scrollPane = new JScrollPane(textArea);
-			scrollPane.setPreferredSize(new Dimension(500, 100));
-			textArea.setLineWrap(true);
-			textArea.setWrapStyleWord(true);
-			textArea.setEditable(false);
-			scrollPane
-					.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
-			System.out.println("Gui instantiated");
-
-			this.setLayout(new FlowLayout());
-			this.getContentPane().add(userInputField, SwingConstants.CENTER);
-			this.getContentPane().add(scrollPane, SwingConstants.CENTER);
-
-			userInputField.addActionListener(new ActionListener() {
-
-				public void actionPerformed(ActionEvent event) {
-					String fromUser = userInputField.getText();
-
-					if (fromUser != null) {
-						ServerMessage s = new ServerMessage(fromUser, name,
-								host, port);
-						// textArea.append(s.toString());
-						try {
-							con.createPrintWriter().writeUTF(s.toString());
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						textArea.setCaretPosition(textArea.getDocument()
-								.getLength());
-						userInputField.setText("");
-						history.add(s.toString());
-					}
-				}
-
-			});
-
-			this.setVisible(true);
-			this.setSize(600, 170);
-			this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			this.setResizable(false);
-			this.setVisible(true);
-
 		}
+		System.out.println("Connection established.");
+
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setPreferredSize(new Dimension(500, 100));
+		textArea.setLineWrap(true);
+		textArea.setWrapStyleWord(true);
+		textArea.setEditable(false);
+		scrollPane
+				.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+
+		System.out.println("Gui instantiated");
+
+		this.setLayout(new FlowLayout());
+		this.getContentPane().add(userInputField, SwingConstants.CENTER);
+		this.getContentPane().add(scrollPane, SwingConstants.CENTER);
+
+		userInputField.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent event) {
+				String fromUser = userInputField.getText();
+
+				if (fromUser != null) {
+					Message s = new Message(fromUser, name, host, port);
+					// textArea.append(s.toString());
+					try {
+						con.createPrintWriter().writeUTF(s.toString());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					textArea.setCaretPosition(textArea.getDocument()
+							.getLength());
+					userInputField.setText("");
+					history.add(s.toString());
+				}
+			}
+
+		});
+
+		this.setVisible(true);
+		this.setSize(600, 170);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setResizable(false);
+
+	}
 
 	/**
-	 * Receive messages 
+	 * Receive messages
 	 * 
 	 * @throws IOException
 	 */
@@ -184,27 +181,29 @@ public class Client extends JFrame {
 			String fromServer = in.readUTF();
 			if (fromServer != null) {
 
-				if (!history.contains(fromServer)) {
-					textArea.append(fromServer.toString() + "\n");
-					textArea.setCaretPosition(textArea.getDocument()
-							.getLength());
-					userInputField.setText("");
-				} else {
-					textArea.append("\t");
-					textArea.append(fromServer.toString() + "\n");
-					textArea.setCaretPosition(textArea.getDocument()
-							.getLength());
-					userInputField.setText("");
-				}
-				System.out.println("Tot. messages sent:" + history.size());
-				System.out.println("Last Message:"
-						+ history.get(history.size() - 1));
+				synchronized (history) {
+					if (!history.contains(fromServer)) {
+						textArea.append(fromServer.toString() + "\n");
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
+						userInputField.setText("");
+					} else {
+						textArea.append("\tME:");
+						textArea.append(fromServer + "\n");
+						textArea.setCaretPosition(textArea.getDocument()
+								.getLength());
+						userInputField.setText("");
+					}
+					System.out.println("Tot. messages sent:" + history.size());
+					System.out.println("Last Message:"
+							+ history.get(history.size() - 1));
 
+				}
 			}
 		}
 	}
 
-	//Getters and Setters
+	// Getters and Setters
 	public Connection getCon() {
 		return con;
 	}
