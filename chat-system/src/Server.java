@@ -1,147 +1,105 @@
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.Hashtable;
 
-/**
- * Server class implements multi-thread modules
- * 
- * @author ettore
- * 
- */
-public class Server {
-	private final ScheduledExecutorService worker;
-	private Thread as, rs, ss, cs;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 
-	/**
-	 * Server constructor. It handles the threads for the different modules.
-	 */
-	public Server() {
+public class Server implements ActionListener {
+	// The ServerSocket we'll use for accepting new connections
+	private static ServerSocket ss;
+	private final int port = 4001;
+	private static Hashtable<Socket, DataOutputStream> outClients = new Hashtable();
+	private JPanel clientList;
+	private JToolBar tools;
+	private static JFrame main;
+	private JButton restart, stop;
 
-		worker = Executors.newSingleThreadScheduledExecutor();
-	}
-
-	public void acceptClients() {
-		AcceptServer as = new AcceptServer();
-		this.as = new Thread(as);
-		this.as.start();
-
-	}
-
-	public void receiveMessages() {
-		ReceiveServer rs = new ReceiveServer();
-		this.rs = new Thread(rs);
-		// worker.schedule(this.rs, 1, TimeUnit.SECONDS);
-		this.rs.start();
-	}
-
-	public void sendMessages() {
-		SendServer ss = new SendServer();
-		this.ss = new Thread(ss);
-		// worker.schedule(this.ss, 2, TimeUnit.SECONDS);
-		this.ss.start();
-	}
-
-	public void closeConnections() {
-		Consuela cleans = new Consuela();
-		this.cs = new Thread(cleans);
-		// worker.schedule(this.cs, 2, TimeUnit.SECONDS);
-		this.cs.start();
-	}
-
-	// Launch Server
-	public static void main(String[] args) {
-		Server s = new Server();
-		s.acceptClients();
-		System.out.println("[Server]Accept Module initialized.");
-		s.receiveMessages();
-		System.out.println("[Server]Receive Module initialized.");
-		s.sendMessages();
-		System.out.println("[Server]Send Module initialized.");
-		// s.closeConnections();
-		// System.out.println("[Server]Consuela started cleaning.. Nono");
-
-	}
-
-}
-
-// Classes to be run on a different thread.
-/**
- * It accepts client connection and does the first handshake
- * 
- * @author ettore
- * 
- */
-class AcceptServer implements Runnable {
-	private int listeningPort = 4001;
-	private static ServerSocket listeningSocket;
-	private boolean acceptClient = true;
-
-	private static List<Connection> clients;
-
-	public static List<Connection> getClients() {
-		return clients;
-	}
-
-	public static void setClients(ArrayList<Connection> clients) {
-		AcceptServer.clients = clients;
-	}
-
-	@Override
-	public void run() {
-		try {
-			if (listeningSocket != null) {
-				listeningSocket.close();
-			}
-
-			listeningSocket = new ServerSocket(listeningPort);
-			clients = new CopyOnWriteArrayList<Connection>();
-			;
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("Ready to accept connections on \nHost: "
-				+ getMyIp() + "\nPort: " + listeningPort);
-
-		while (acceptClient) {
-			try {
-				// listen to 4001 until a client knocks
-				Socket clientSocket = listeningSocket.accept();
-				Connection con = new Connection(clientSocket);
-
-				clients.add(con);
-				System.out.println("Total clients now: "
-						+ AcceptServer.getClients().size());
-
-			} catch (IOException e) {
-				System.err
-						.println("An error occurred while creating the I/O streams: the socket is closed or it is not connected.");
-				e.printStackTrace();
-			}
-		}
-		try {
-			listeningSocket.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+	private static boolean listenFlag;
+	private static Server server;
 
 	/**
-	 * Get your current ip
+	 * Constructor. It launches the listen() method on port 4001.
 	 * 
-	 * @return
+	 * @throws IOException
+	 */
+	protected Server() throws IOException {
+
+		listen();
+	}
+
+	/**
+	 * Singleton instantiation for one Server object at time.
+	 * 
+	 * @throws IOException
+	 */
+	public static void instance() throws IOException {
+		server = new Server();
+	}
+
+	/**
+	 * Infinite loop that listens ad accept new connections.
+	 * 
+	 * @throws IOException
+	 */
+	private void listen() throws IOException {
+		ss = new ServerSocket(port);
+		listenFlag = true;
+		System.out.println("Server launched\n" + "Host: " + getMyIp() + "\n"
+				+ "Listening on " + ss);
+		setupGui();
+		while (true) {
+			while (listenFlag) {
+				Socket s = ss.accept();
+
+				System.out.println("New user connected from "
+						+ s.getInetAddress());
+				DataOutputStream dout = new DataOutputStream(
+						s.getOutputStream());
+				outClients.put(s, dout);
+				getClientList();
+
+				new ServerThread(this, s);
+			}
+		}
+	}
+
+	/**
+	 * Construct and show the server gui.
+	 */
+	public void setupGui() {
+		main = new JFrame("Consuela Server");
+		main.setLayout(new BorderLayout());
+		main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		getClientList();
+		setupTools();
+		main.getContentPane().add(tools, BorderLayout.NORTH);
+		main.setSize(500, 300);
+		main.setVisible(true);
+		main.setResizable(false);
+
+	}
+
+	/**
+	 * Get my ip for external connections
+	 * 
+	 * @return String
 	 */
 	public String getMyIp() {
 		String ip = null;
@@ -165,157 +123,139 @@ class AcceptServer implements Runnable {
 		}
 		return ip;
 	}
-}
 
-/**
- * Receive messages from all clients and store them in a HashMap as a Stack
- * 
- * @author ettore
- * 
- */
-class ReceiveServer implements Runnable {
-	private static List<String> messages;
-	private static List<String> history;
-
-	public static List<String> getMessages() {
-		return messages;
+	/**
+	 * Get the output streams of all connected clients in a Enumeration
+	 * 
+	 * @return Enumeration
+	 */
+	Enumeration getOutputStreams() {
+		return outClients.elements();
 	}
 
-	public static void setMessages(ArrayList<String> messages) {
-		ReceiveServer.messages = messages;
-	}
+	/**
+	 * Send messages to all ServerThread
+	 * 
+	 * @param message
+	 */
+	public void sendToAll(String message) {
+		synchronized (outClients) {
+			for (Enumeration e = getOutputStreams(); e.hasMoreElements();) {
 
-	public static List<String> getHistory() {
-		return history;
-	}
-
-	public static void setHistory(ArrayList<String> history) {
-		ReceiveServer.history = history;
-	}
-
-	@Override
-	public void run() {
-		messages = new CopyOnWriteArrayList<String>();
-		history = new CopyOnWriteArrayList<String>();
-		while (true) {
-
-			synchronized (messages) {
-				if (AcceptServer.getClients() != null
-						&& !AcceptServer.getClients().isEmpty()) {
-					List<Connection> clientList = AcceptServer.getClients();
-
-					for (Connection client : clientList) {
-
-						String message = null;
-						try {
-							if (client.getNewConnection() != null) {
-								// Read message from object client Connection
-								message = client.createBufferedReader()
-										.readUTF();
-							} else {
-								AcceptServer.getClients().remove(client);
-							}
-						} catch (IOException e) {
-							System.err.println(message
-									+ " was read from socket "
-									+ client.getNewConnection()
-											.getInetAddress() + " is invalid");
-							e.printStackTrace();
-
-						}
-						// If a message is present save it
-						if (message != null) {
-							messages.add(message);
-							history.add(message);
-							System.out
-									.println("[ReceiveServer]Message received: \n"
-											+ message + "\n");
-						}
-					}
+				DataOutputStream dout = (DataOutputStream) e.nextElement();
+				try {
+					dout.writeUTF(message);
+				} catch (IOException ie) {
+					System.out.println(ie);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Remove a client connection from the hashMap of clients
+	 * 
+	 * @param Socket
+	 *            s
+	 */
+	void removeConnection(Socket s) {
+		synchronized (outClients) {
+			System.out.println("Removing connection to " + s);
+			outClients.remove(s);
+			getClientList();
+			try {
+				s.close();
+			} catch (IOException ie) {
+				System.out.println("Error closing " + s);
+				ie.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * Graphical user interface for the server client list
+	 */
+	public void getClientList() {
+
+		clientList = new JPanel();
+		synchronized (outClients) {
+			System.out.println("Total users: " + outClients.size());
+			String[] clients = new String[outClients.size()];
+			int pointer = 0;
+			for (Enumeration e = outClients.keys(); e.hasMoreElements();) {
+				Socket sock = (Socket) e.nextElement();
+				clients[pointer] = "Client "+pointer+1+" "+sock;
+				System.out.println(clients[pointer]);
+				pointer++;
+
+			}
+			JList list = new JList(clients); // data has type Object[]
+			list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+			list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+			list.setVisibleRowCount(-1);
+			JScrollPane listScroller = new JScrollPane(list);
+			listScroller.setPreferredSize(new Dimension(420, 220));
+			clientList.add(listScroller);
+		}
+		main.getContentPane().add(clientList, BorderLayout.CENTER);
+		main.repaint();
+		main.revalidate();
+
+	}
+
+	/**
+	 * Set up the JToolBar for the Consuela server with some options
+	 */
+	public void setupTools() {
+		tools = new JToolBar();
+		restart = new JButton("Restart");
+		restart.addActionListener(this);
+
+		stop = new JButton("Refuse/Accept");
+		stop.setToolTipText("Stop or Start the Server from listening for new connections");
+		stop.addActionListener(this);
+		
+		tools.add(stop);
+		tools.add(restart);
+
+	}
+
+	/**
+	 * Maps the actions for the JToolBar of the server
+	 */
+	public void actionPerformed(ActionEvent e) {
+		Object source = e.getSource();
+		String type = source.getClass().getName();
+
+		if (source.equals(restart)) { // first button clicked
+			System.out.println("Restarting server...");
+			synchronized (outClients) {
+				outClients = new Hashtable();
+			}
+		} else if (source.equals(stop)) {
+			if (listenFlag) {
+				listenFlag = false;
+				System.out.println("Server is not listening for connections\n");
+				
+
+			} else {
+				listenFlag = true;
+				System.out.println("Server launched\n" + "Host: " + getMyIp() + "\n"
+						+ "Listening on " + ss);
+				
 			}
 
 		}
 
 	}
-}
 
-/**
- * Send messages to all clients
- * 
- * @author ettore
- * 
- */
-class SendServer implements Runnable {
-
-	@Override
-	public void run() {
-
-		while (true) {
-
-			synchronized (AcceptServer.getClients()) {
-				synchronized (ReceiveServer.getMessages()) {
-
-					if (AcceptServer.getClients() != null) {
-						Iterator<String> messages = ReceiveServer.getMessages()
-								.iterator();
-						Iterator<Connection> clients = AcceptServer
-								.getClients().iterator();
-						while (messages.hasNext()) {
-							String message = messages.next();
-							System.out.println("[SendServer]Message sent: \n"
-									+ message + "\n");
-
-							while (clients.hasNext()) {
-								Connection client = clients.next();
-								try {
-									client.createPrintWriter().writeUTF(
-											message.toString());
-								} catch (IOException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-
-							}
-							ReceiveServer.getMessages().remove(message);
-
-						}
-
-					}
-				}
-			}
-		}
-
+	/**
+	 * Launch Consuela Server
+	 * 
+	 * @param args
+	 * @throws Exception
+	 */
+	static public void main(String args[]) throws Exception {
+		instance();
 	}
-}
-
-/**
- * Close all unused connections/clients like a Cleaning Lady
- */
-class Consuela implements Runnable {
-
-	@Override
-	public void run() {
-
-		while (true) {
-
-			if (AcceptServer.getClients() != null) {
-
-				Iterator<Connection> clients = AcceptServer.getClients()
-						.iterator();
-				while (clients.hasNext()) {
-					Connection client = clients.next();
-					if (client.getNewConnection().isClosed()) {
-						AcceptServer.getClients().remove(client);
-						System.out.println("[Server]Consuela closed:"
-								+ client.getNewConnection().getInetAddress()
-										.getHostName());
-					}
-
-				}
-
-			}
-		}
-	}
-
 }
