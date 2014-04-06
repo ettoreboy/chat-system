@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -131,7 +130,7 @@ public class Client extends JFrame {
 		System.out.println("Connection established.");
 
 		JScrollPane scrollPane = new JScrollPane(textArea);
-		scrollPane.setPreferredSize(new Dimension(600, 150));
+		scrollPane.setPreferredSize(new Dimension(585, 150));
 		textArea.setLineWrap(true);
 		textArea.setWrapStyleWord(true);
 		textArea.setEditable(false);
@@ -152,16 +151,17 @@ public class Client extends JFrame {
 				if (fromUser != null) {
 					Message s = new Message(fromUser, name, host, port);
 					// textArea.append(s.toString());
-					try {
-						con.createPrintWriter().writeUTF(s.toString());
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					synchronized (history) {
+						try {
+							con.createPrintWriter().writeUTF(s.toString());
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						textArea.setCaretPosition(textArea.getDocument().getLength());
+						userInputField.setText("");
+						history.add(s.toString());
 					}
-					textArea.setCaretPosition(textArea.getDocument()
-							.getLength());
-					userInputField.setText("");
-					history.add(s.toString());
 				}
 			}
 
@@ -180,24 +180,23 @@ public class Client extends JFrame {
 	 * @throws IOException
 	 */
 	public void run() throws IOException {
-		
 		DataInputStream in = con.createBufferedReader();
 		while (true) {
-			try{
 			String fromServer = in.readUTF();
 			if (fromServer != null) {
 
+				System.out.println("\n\n");
 				synchronized (history) {
-					if (!history.contains(fromServer)) {
-						textArea.append(fromServer.toString() + "\n");
-						textArea.setCaretPosition(textArea.getDocument()
-								.getLength());
+					if (history.contains(fromServer)) {
+						textArea.append("     Me: ");
+						textArea.append(fromServer.split("\\[")[2].split("\\]")[0] + "\n");
+						//textArea.append(fromServer + "\n");
+						textArea.setCaretPosition(textArea.getDocument().getLength());
 						userInputField.setText("");
 					} else {
-						textArea.append("\tME:");
-						textArea.append(fromServer + "\n");
-						textArea.setCaretPosition(textArea.getDocument()
-								.getLength());
+						textArea.append(fromServer.split("\\[")[1].split("\\]")[0] + ": " + fromServer.split("\\[")[2].split("\\]")[0] + "\n");
+						//textArea.append(fromServer.toString() + "\n");
+						textArea.setCaretPosition(textArea.getDocument().getLength());
 						userInputField.setText("");
 					}
 					System.out.println("Tot. messages sent:" + history.size());
@@ -205,10 +204,6 @@ public class Client extends JFrame {
 							+ history.get(history.size() - 1));
 
 				}
-			}
-			}catch(EOFException e){
-				System.out.println("[ERROR] "+host+" no longer available. Closing..");
-				System.exit(-1);
 			}
 		}
 	}
