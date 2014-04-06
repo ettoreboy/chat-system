@@ -14,8 +14,10 @@ public class ServerThread extends Thread {
 	public ServerThread(Server server, Socket socket) {
 		this.server = server;
 		this.socket = socket;
+		server.sendHistory(this.socket);
 		start();
 	}
+	
 
 	/**
 	 * Run instruction for a single server thread

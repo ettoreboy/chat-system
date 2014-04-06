@@ -2,13 +2,16 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -32,6 +35,7 @@ public class Server implements ActionListener {
 
 	private static boolean listenFlag;
 	private static Server server;
+	private static ArrayList<String> history;
 
 	/**
 	 * Constructor. It launches the listen() method on port 4001.
@@ -171,6 +175,39 @@ public class Server implements ActionListener {
 			}
 		}
 	}
+	
+	/**
+	 * Save messages in the Server for late client.
+	 * @param s
+	 */
+	public void saveMessage(String s){
+		if(history == null){
+			history = new ArrayList<String>();
+		}
+		history.add(s);
+	}
+	
+	/**
+	 * Send all the history to one socket
+	 * @param s
+	 */
+	public void sendHistory(Socket s){
+		if (history != null && !history.isEmpty()){
+		try {
+			DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+			for (String old : history) {
+				System.out.println("Sending " + old);
+				dout.writeUTF(old);
+			}
+		} catch (EOFException ie) {
+		} catch (IOException ie) {
+			ie.printStackTrace();
+		} finally {
+			
+		}
+		}
+		
+	}
 
 	/**
 	 * Graphical user interface for the server client list
@@ -235,6 +272,15 @@ public class Server implements ActionListener {
 
 		}
 
+	}
+	
+
+	public static ArrayList<String> getHistory() {
+		return history;
+	}
+
+	public static void setHistory(ArrayList<String> history) {
+		Server.history = history;
 	}
 
 	/**
