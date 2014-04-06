@@ -31,7 +31,7 @@ public class Server implements ActionListener {
 	private JPanel clientList;
 	private JToolBar tools;
 	private static JFrame main;
-	private JButton restart;
+	private JButton restart, clear;
 
 	private static boolean listenFlag;
 	private static Server server;
@@ -224,7 +224,7 @@ public class Server implements ActionListener {
 			int pointer = 0;
 			for (Enumeration e = outClients.keys(); e.hasMoreElements();) {
 				Socket sock = (Socket) e.nextElement();
-				clients[pointer] = "Client " + pointer + 1 + " " + sock;
+				clients[pointer] = "Client " + (pointer +1)+ "  " + sock;
 				System.out.println(clients[pointer]);
 				pointer++;
 
@@ -251,6 +251,10 @@ public class Server implements ActionListener {
 		restart = new JButton("Restart");
 		restart.addActionListener(this);
 		tools.add(restart);
+		
+		clear = new JButton("Clear History");
+		clear.addActionListener(this);
+		tools.add(clear);
 
 	}
 
@@ -271,8 +275,12 @@ public class Server implements ActionListener {
 
 				}
 				getClientList();
+				
 			}
 
+		}else if(source.equals(clear)){
+			System.out.println("Cleaning history...");
+			history = new ArrayList();
 		}
 
 	}
