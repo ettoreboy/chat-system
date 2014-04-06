@@ -179,8 +179,13 @@ public class Client extends JFrame {
 	 * @throws IOException
 	 */
 	public void run() throws IOException {
+		
 		DataInputStream in = con.createBufferedReader();
 		while (true) {
+			if(con.getNewConnection().isClosed()){
+				System.out.println("Server : "+host+" no longer available. Closing..");
+				System.exit(-1);
+			}
 			String fromServer = in.readUTF();
 			if (fromServer != null) {
 
