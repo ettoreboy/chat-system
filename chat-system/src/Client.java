@@ -197,10 +197,9 @@ public class Client extends JFrame {
 				String fromServer = in.readUTF();
 				if (fromServer != null) {
 
-					System.out.println("\n\n");
 					synchronized (history) {
 						if (history.contains(fromServer)) {
-							textArea.append("     Me: ");
+							textArea.append("         Me: ");
 							textArea.append(fromServer.split("\\[")[2]
 									.split("\\]")[0] + "\n");
 							// textArea.append(fromServer + "\n");
@@ -217,7 +216,7 @@ public class Client extends JFrame {
 							textArea.setCaretPosition(textArea.getDocument()
 									.getLength());
 							userInputField.setText("");
-						}				
+						}
 					}
 				}
 			} catch (EOFException e) {
