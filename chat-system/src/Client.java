@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -179,8 +180,10 @@ public class Client extends JFrame {
 	 * @throws IOException
 	 */
 	public void run() throws IOException {
+		
 		DataInputStream in = con.createBufferedReader();
 		while (true) {
+			try{
 			String fromServer = in.readUTF();
 			if (fromServer != null) {
 
@@ -202,6 +205,10 @@ public class Client extends JFrame {
 							+ history.get(history.size() - 1));
 
 				}
+			}
+			}catch(EOFException e){
+				System.out.println("[ERROR] "+host+" no longer available. Closing..");
+				System.exit(-1);
 			}
 		}
 	}

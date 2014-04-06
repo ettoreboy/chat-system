@@ -28,7 +28,7 @@ public class Server implements ActionListener {
 	private JPanel clientList;
 	private JToolBar tools;
 	private static JFrame main;
-	private JButton restart, stop;
+	private JButton restart;
 
 	private static boolean listenFlag;
 	private static Server server;
@@ -83,14 +83,14 @@ public class Server implements ActionListener {
 	 * Construct and show the server gui.
 	 */
 	public void setupGui() {
-		main = new JFrame("Consuela Server");
+		main = new JFrame("Consuela Server " + getMyIp());
 		main.setLayout(new BorderLayout());
 		main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		getClientList();
 		setupTools();
 		main.getContentPane().add(tools, BorderLayout.NORTH);
-		main.setSize(500, 300);
+		main.setSize(600, 300);
 		main.setVisible(true);
 		main.setResizable(false);
 
@@ -184,7 +184,7 @@ public class Server implements ActionListener {
 			int pointer = 0;
 			for (Enumeration e = outClients.keys(); e.hasMoreElements();) {
 				Socket sock = (Socket) e.nextElement();
-				clients[pointer] = "Client "+pointer+1+" "+sock;
+				clients[pointer] = "Client " + pointer + 1 + " " + sock;
 				System.out.println(clients[pointer]);
 				pointer++;
 
@@ -194,7 +194,7 @@ public class Server implements ActionListener {
 			list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 			list.setVisibleRowCount(-1);
 			JScrollPane listScroller = new JScrollPane(list);
-			listScroller.setPreferredSize(new Dimension(420, 220));
+			listScroller.setPreferredSize(new Dimension(500, 220));
 			clientList.add(listScroller);
 		}
 		main.getContentPane().add(clientList, BorderLayout.CENTER);
@@ -210,12 +210,6 @@ public class Server implements ActionListener {
 		tools = new JToolBar();
 		restart = new JButton("Restart");
 		restart.addActionListener(this);
-
-		stop = new JButton("Refuse/Accept");
-		stop.setToolTipText("Stop or Start the Server from listening for new connections");
-		stop.addActionListener(this);
-		
-		tools.add(stop);
 		tools.add(restart);
 
 	}
@@ -230,19 +224,13 @@ public class Server implements ActionListener {
 		if (source.equals(restart)) { // first button clicked
 			System.out.println("Restarting server...");
 			synchronized (outClients) {
-				outClients = new Hashtable();
-			}
-		} else if (source.equals(stop)) {
-			if (listenFlag) {
-				listenFlag = false;
-				System.out.println("Server is not listening for connections\n");
-				
+				for (Enumeration e1 = outClients.keys(); e1.hasMoreElements();) {
 
-			} else {
-				listenFlag = true;
-				System.out.println("Server launched\n" + "Host: " + getMyIp() + "\n"
-						+ "Listening on " + ss);
-				
+					Socket connection = (Socket) e1.nextElement();
+					removeConnection(connection);
+
+				}
+				getClientList();
 			}
 
 		}
