@@ -28,17 +28,19 @@ public class ServerThread extends Thread {
 			DataInputStream din = new DataInputStream(socket.getInputStream());
 			while (true) {
 				
+				//Save messages on server history, if not duplicated.
 					String message = din.readUTF();
 					if(!Server.getHistory().contains(message)){
 						server.saveMessage(message);
 					}
-					System.out.println("Sending " + message);
+					System.out.println("[SENT] " + message);
 					server.sendToAll(message);
 				}
 			
 		} catch (EOFException ie) {
 		} catch (IOException ie) {
 			ie.printStackTrace();
+			//If ended, remove the client connection objct from the list
 		} finally {
 			server.removeConnection(socket);
 		}

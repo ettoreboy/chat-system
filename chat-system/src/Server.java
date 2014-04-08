@@ -2,7 +2,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -22,12 +21,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
+import javax.swing.UIManager;
 
 public class Server implements ActionListener {
-	// The ServerSocket we'll use for accepting new connections
+
 	private static ServerSocket ss;
 	private final int port = 4001;
-	private static Hashtable<Socket, DataOutputStream> outClients = new Hashtable();
+	private static Hashtable<Socket, DataOutputStream> outClients = new Hashtable<Socket, DataOutputStream>();
 	private JPanel clientList;
 	private JToolBar tools;
 	private static JFrame main;
@@ -43,7 +43,7 @@ public class Server implements ActionListener {
 	 * @throws IOException
 	 */
 	protected Server() throws IOException {
-		history = new ArrayList();
+		history = new ArrayList<String>();
 		listen();
 	}
 
@@ -87,6 +87,12 @@ public class Server implements ActionListener {
 	 * Construct and show the server gui.
 	 */
 	public void setupGui() {
+		// Native L&F
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			System.out.println("Unable to set native look and feel: " + e);
+		}
 		main = new JFrame("Consuela Server " + getMyIp());
 		main.setLayout(new BorderLayout());
 		main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -133,7 +139,7 @@ public class Server implements ActionListener {
 	 * 
 	 * @return Enumeration
 	 */
-	Enumeration getOutputStreams() {
+	Enumeration<DataOutputStream> getOutputStreams() {
 		return outClients.elements();
 	}
 
@@ -144,7 +150,7 @@ public class Server implements ActionListener {
 	 */
 	public void sendToAll(String message) {
 		synchronized (outClients) {
-			for (Enumeration e = getOutputStreams(); e.hasMoreElements();) {
+			for (Enumeration<?> e = getOutputStreams(); e.hasMoreElements();) {
 
 				DataOutputStream dout = (DataOutputStream) e.nextElement();
 				try {
@@ -206,10 +212,19 @@ public class Server implements ActionListener {
 			} catch (IOException ie) {
 				ie.printStackTrace();
 			} finally {
-				
+
 			}
 		}
 
+	}
+
+	public static void setNativeLAF() {
+		// Native L&F
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			System.out.println("Unable to set native look and feel: " + e);
+		}
 	}
 
 	/**
@@ -222,14 +237,15 @@ public class Server implements ActionListener {
 			System.out.println("Total users: " + outClients.size());
 			String[] clients = new String[outClients.size()];
 			int pointer = 0;
-			for (Enumeration e = outClients.keys(); e.hasMoreElements();) {
+			for (Enumeration<Socket> e = outClients.keys(); e.hasMoreElements();) {
 				Socket sock = (Socket) e.nextElement();
-				clients[pointer] = "Client " + (pointer +1)+ "  " + sock;
+				clients[pointer] = "Client " + (pointer + 1) + "  " + sock;
 				System.out.println(clients[pointer]);
 				pointer++;
 
 			}
-			JList list = new JList(clients); // data has type Object[]
+			JList<String> list = new JList<String>(clients); // data has type
+																// Object[]
 			list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 			list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
 			list.setVisibleRowCount(-1);
@@ -251,7 +267,7 @@ public class Server implements ActionListener {
 		restart = new JButton("Restart");
 		restart.addActionListener(this);
 		tools.add(restart);
-		
+
 		clear = new JButton("Clear History");
 		clear.addActionListener(this);
 		tools.add(clear);
@@ -268,19 +284,20 @@ public class Server implements ActionListener {
 		if (source.equals(restart)) { // first button clicked
 			System.out.println("Restarting server...");
 			synchronized (outClients) {
-				for (Enumeration e1 = outClients.keys(); e1.hasMoreElements();) {
+				for (Enumeration<Socket> e1 = outClients.keys(); e1
+						.hasMoreElements();) {
 
 					Socket connection = (Socket) e1.nextElement();
 					removeConnection(connection);
 
 				}
 				getClientList();
-				
+
 			}
 
-		}else if(source.equals(clear)){
+		} else if (source.equals(clear)) {
 			System.out.println("Cleaning history...");
-			history = new ArrayList();
+			history = new ArrayList<String>();
 		}
 
 	}

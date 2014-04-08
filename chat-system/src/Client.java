@@ -20,10 +20,12 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 
 public class Client extends JFrame implements Runnable{
+	private static final long serialVersionUID = -5507269416865711567L;
 	/**
-	 * 
+	 * Implementation of GUI and functionalities of a Client
 	 */
 	private Connection con;
 	private String name;
@@ -59,12 +61,17 @@ public class Client extends JFrame implements Runnable{
 	}
 
 	/**
-	 * Initialize the contents of the frame.
+	 * Initialize the elements of the frame and ask for host and username.
 	 * 
 	 * @throws IOException
 	 * @throws UnknownHostException
 	 */
 	private void initialize() throws UnknownHostException, IOException {
+		 try {
+	           UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	       } catch (Exception e) {
+	           System.out.println("Unable to set native look and feel: " + e);
+	       }
 		history = new ArrayList<String>();
 
 		JTextPane hostname = new JTextPane();
@@ -80,7 +87,6 @@ public class Client extends JFrame implements Runnable{
 		inputPanel.setPreferredSize(new Dimension(350, 40));
 
 		// At initialization, ask the user for username and host.
-
 		int answ = JOptionPane.showConfirmDialog(this, inputPanel,
 				"Enter credentials", JOptionPane.YES_NO_OPTION);
 
@@ -116,7 +122,7 @@ public class Client extends JFrame implements Runnable{
 
 			}
 
-			// Handshake with Server
+			// Handshake with Server succeeded
 			if (host != null) {
 				try {
 					con = new Connection(new Socket(host, port));
