@@ -27,7 +27,7 @@ public class ServerThread extends Thread {
 		try {
 			DataInputStream din = new DataInputStream(socket.getInputStream());
 			while (true) {
-				synchronized (Server.getHistory()) {
+				
 					String message = din.readUTF();
 					if(!Server.getHistory().contains(message)){
 						server.saveMessage(message);
@@ -35,7 +35,7 @@ public class ServerThread extends Thread {
 					System.out.println("Sending " + message);
 					server.sendToAll(message);
 				}
-			}
+			
 		} catch (EOFException ie) {
 		} catch (IOException ie) {
 			ie.printStackTrace();

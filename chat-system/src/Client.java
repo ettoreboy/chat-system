@@ -25,7 +25,6 @@ public class Client extends JFrame implements Runnable{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
 	private Connection con;
 	private String name;
 	private final int port = 4001;
