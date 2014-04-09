@@ -23,6 +23,17 @@ import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 
+/**
+ * The class Server implements different Server side features:
+ * -The Server Gui;
+ * -Keeps track of the message history and updates new clients;
+ * -Instantiate new ServerThreads;
+ * 
+ * @author Ettore Ciprian
+ * @author Marco Zanellati
+ * @author Tobias Bernard
+ *
+ */
 public class Server implements ActionListener {
 
 	private static ServerSocket ss;

@@ -1,6 +1,13 @@
 import java.io.*;
 import java.net.*;
 
+/**
+ * The class ServerThread represent a single Server Thread established for every client.
+ * @author Ettore Ciprian
+ * @author Marco Zanellati
+ * @author Tobias Bernard
+ *
+ */
 public class ServerThread extends Thread {
 
 	private Server server;

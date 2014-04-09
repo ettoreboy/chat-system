@@ -21,7 +21,17 @@ import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
-
+/**
+ * The Client class implements the Client side feature in a separate 
+ * execution from the Server class:
+ * -A thread that continuously listen to the Server messages;
+ * -Another thread that continuously send the user input to the Server.
+ * 
+ * @author Ettore Ciprian
+ * @author Marco Zanellati
+ * @author Tobias Bernard
+ *
+ */
 public class Client extends JFrame implements Runnable{
 	private static final long serialVersionUID = -5507269416865711567L;
 	/**

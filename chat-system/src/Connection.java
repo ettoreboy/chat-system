@@ -4,7 +4,15 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-
+/**
+ * The Connection class is a Wrapper class for the object Socket:
+ * -It creates the DataOutputStream/DataInputStream Object from the Socket;
+ * 
+ * @author Ettore Ciprian
+ * @author Marco Zanellati
+ * @author Tobias Bernard
+ *
+ */
 public class Connection {
 private Socket socket;
 private String hostName;
